@@ -1,0 +1,3 @@
+[submodule "narcissus"]
+	path = submodules/narcissus
+	url = https://github.com/LogDS/narcissus.git
