@@ -21,11 +21,21 @@
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
+#include <cstring>
 
 #include <jackbergus/framework/types/NativeTypes.h>
 
 namespace jackbergus {
     namespace framework {
+        struct BlockHeader {
+            FinestScaleTimeRepreentation start;
+            FinestScaleTimeRepreentation end;
+            uint8_t                      start_validity ;
+            uint8_t                      end_validity ;
+            char                         logger_record[126];
+            uint64_t                     payload_size;
+        };
+
         /**
          * File Serialization in a block-wise structure, so to better read contiguously the file by block size without any requirement for memory mapping or the like.
          * @tparam block_size Size of the fixed-size block containing all the records of potential variable size. This is to improve over data reading in a forthcoming step
@@ -42,14 +52,7 @@ namespace jackbergus {
 
         public:
 
-            struct BlockHeader {
-                FinestScaleTimeRepreentation start;
-                FinestScaleTimeRepreentation end;
-                uint8_t                      start_validity : 1;
-                uint8_t                      end_validity : 1;
-                char                         logger_record[126];
-                uint64_t                     payload_size;
-            };
+
 
             uint64_t getFileNameLen() const {
                 return (!stream_is_open) ? 0 : file_name.size();
@@ -114,7 +117,7 @@ namespace jackbergus {
             void flush() {
                 // Forces to write a block to disk
                 if (stream_is_open) {
-                    stream.write(reinterpret_cast<char*>(&written_element), sizeof(written_element));
+                    stream.write(reinterpret_cast<char*>(&written_element), sizeof(uint64_t));
                     stream.write(reinterpret_cast<char*>(&buffer), BUFFER_SIZE);
                     written_element = 0;
                     written_offset = 0;

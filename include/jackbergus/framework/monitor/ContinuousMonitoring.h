@@ -19,6 +19,9 @@
 #ifndef GENERALFRAMEWORK_CONTINUOUSMONITORING_H
 #define GENERALFRAMEWORK_CONTINUOUSMONITORING_H
 
+#include <jackbergus/framework/types/NativeTypes.h>
+#include <narcissus/lightweight_any.h>
+
 namespace  jackbergus {
     namespace framework {
         template<typename Type>
@@ -42,11 +45,14 @@ start_time = x.start_time;
                 return *this;}
         };
 
+        using AnyVariableMonitoring = jackbergus::framework::VariableMonitoring<lightweight_any>;
+
 
         class ContinuousMonitoring {
         public:
             virtual void clearFile() = 0;
             virtual void setFile(const std::string& FileName) = 0;
+            virtual bool setInvalidValue(jackbergus::framework::FinestScaleTimeRepreentation curr_t) = 0;
         };
     }
 }

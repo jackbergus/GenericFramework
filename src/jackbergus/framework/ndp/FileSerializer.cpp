@@ -15,7 +15,7 @@
 //
 //  You should have received a copy of the GNU General Public License
 //  along with narcissus. If not, see <http://www.gnu.org/licenses/>.
-#include "jackbergus/framework/FileSerializer.h"
+#include "../../../../include/jackbergus/framework/ndp/FileSerializer.h"
 
 namespace jackbergus {
     namespace framework {

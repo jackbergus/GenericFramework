@@ -24,7 +24,7 @@
 #include <jackbergus/framework/types/NativeTypes.h>
 #include <memory>
 
-#include <jackbergus/framework/FileSerializer.h>
+#include <jackbergus/framework/ndp//FileSerializer.h>
 #include <jackbergus/framework/monitor/ContinuousMonitoring.h>
 
 namespace jackbergus {
@@ -41,7 +41,7 @@ namespace jackbergus {
 
             void _pushRecordNonRecursive(VariableMonitoring<Type>&& obj) {
                 if (file_serialized) {
-                    FileSerializer<1024>::BlockHeader block{};
+                    BlockHeader block{};
                     block.start = obj.start_time;
                     block.end = obj.end_time_inclusive;
                     block.start_validity = 1;
@@ -57,7 +57,7 @@ namespace jackbergus {
 
             void _pushRecordNonRecursive(const VariableMonitoring<Type>& obj) {
                 if (file_serialized) {
-                    FileSerializer<1024>::BlockHeader block{};
+                    BlockHeader block{};
                     block.start = obj.start_time;
                     block.end = obj.end_time_inclusive;
                     block.start_validity = 1;
