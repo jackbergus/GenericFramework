@@ -16,7 +16,7 @@
 namespace jackbergus {
     namespace framework {
 template <uint64_t block_size = 1024>
-        class AnyFundamentalVariableMonitoring : public jackbergus::framework::ContinuousMonitoring {
+        class AnyFundamentalVariableMonitoring : public jackbergus::framework::ContinuousMonitoring<lightweight_any> {
             jackbergus::framework::FinestScaleTimeRepreentation start_time, end_time_inclusive;
             lightweight_any current_value;
             bool is_value_valid;
@@ -151,7 +151,7 @@ template <uint64_t block_size = 1024>
                 }
             }
 
-            bool isCurrentlyValid() const {
+            bool isCurrentlyValid() const override {
                 return is_value_valid;
             }
 
@@ -163,6 +163,8 @@ template <uint64_t block_size = 1024>
                 }
             }
 
+
+
             /**
              *
              * @tparam T
@@ -172,6 +174,18 @@ template <uint64_t block_size = 1024>
                 return is_value_valid ? (T*)current_value.raw() : nullptr;
             }
 
+    [[nodiscard]] virtual const FinestScaleTimeRepreentation getCurrentTime() const {
+                return end_time_inclusive;
+            }
+
+    [[nodiscard]] virtual void* getRawPtr() const override {
+        return is_value_valid ? (void*)current_value.raw() : nullptr;
+    }
+
+    bool updateValue(jackbergus::framework::FinestScaleTimeRepreentation curr_t,
+                             const lightweight_any& value) override {
+                return updateValue(curr_t, value, {});
+            }
 
             /**
              *
@@ -182,7 +196,7 @@ template <uint64_t block_size = 1024>
              */
             bool updateValue(jackbergus::framework::FinestScaleTimeRepreentation curr_t,
                              const lightweight_any& value,
-                             const std::equal_to<lightweight_any>& t = {}) {
+                             const std::equal_to<lightweight_any>& t) {
                 if (end_time_inclusive > curr_t) {
                     return false;
                 }

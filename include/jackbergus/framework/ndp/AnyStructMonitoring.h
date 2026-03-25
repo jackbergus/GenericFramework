@@ -56,12 +56,33 @@ struct static_for {
          * @tparam block_size
          */
         template <typename  T, uint64_t block_size = 1024>
-                class AnyStructMonitoring : public jackbergus::framework::ContinuousMonitoring {
+                class AnyStructMonitoring : public jackbergus::framework::ContinuousMonitoring<T> {
 
             std::vector<jackbergus::framework::AnyFundamentalVariableMonitoring<block_size>> fields;
         public:
             constexpr static uint64_t field_count = field_reflection::field_count<T>;
             using validity_vector = std::array<bool, field_count>;
+
+            [[nodiscard]] const FinestScaleTimeRepreentation getCurrentTime() const  override {
+                FinestScaleTimeRepreentation t = 0;
+                for (const auto& ref : fields) {
+                    if (ref.validityInterval().second > t) {
+                        t = ref.validityInterval().second;
+                    }
+                }
+                return t;
+            };
+            [[nodiscard]] bool isCurrentlyValid() const override {
+                for (const auto& ref : fields) {
+                    if (ref.isCurrentlyValid()) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+            [[nodiscard]] virtual void* getRawPtr() const {
+                throw std::invalid_argument("getRawPtr()");
+            }
 
             bool setInvalidValue(jackbergus::framework::FinestScaleTimeRepreentation curr_t) override {
                 auto result = true;
@@ -73,7 +94,7 @@ struct static_for {
             }
 
             bool updateValue(jackbergus::framework::FinestScaleTimeRepreentation curr_t,
-                             const T& value) {
+                             const T& value)  override {
                 return static_for<T, 0, field_reflection::field_count<T>>{}.setRecursivelyWithTemplates(curr_t, value, fields);
             }
 

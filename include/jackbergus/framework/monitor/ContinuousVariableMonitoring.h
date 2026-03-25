@@ -31,7 +31,7 @@ namespace jackbergus {
     namespace framework {
 
         template <typename Type>
-        class ContinuousVariableMonitoring : public  ContinuousMonitoring {
+        class ContinuousVariableMonitoring : public  ContinuousMonitoring<Type> {
             FinestScaleTimeRepreentation start_time, end_time_inclusive;
             Type current_value;
             bool is_value_valid;
@@ -116,7 +116,7 @@ namespace jackbergus {
                 file_serialized = std::make_unique<FileSerializer<>>(FileName);
             }
 
-            bool setInvalidValue(FinestScaleTimeRepreentation curr_t) {
+            bool setInvalidValue(FinestScaleTimeRepreentation curr_t) override {
                 if (end_time_inclusive > curr_t) {
                     return false;
                 }
@@ -134,6 +134,20 @@ namespace jackbergus {
                 }
             }
 
+            [[nodiscard]] const FinestScaleTimeRepreentation getCurrentTime() const  override {
+                return end_time_inclusive;
+            };
+            [[nodiscard]] bool isCurrentlyValid() const override {
+                return is_value_valid;
+            };
+            [[nodiscard]] void* getRawPtr() const override {
+                return is_value_valid ? (void*)&current_value : nullptr;
+            };
+
+            bool updateValue(FinestScaleTimeRepreentation curr_t,
+                             const Type& value) override {
+                return updateValue(curr_t, value, {});
+            }
 
             /**
              *
@@ -144,7 +158,7 @@ namespace jackbergus {
              */
             bool updateValue(FinestScaleTimeRepreentation curr_t,
                              const Type& value,
-                             const std::equal_to<Type>& t = {}) {
+                             const std::equal_to<Type>& t) {
                 if (end_time_inclusive > curr_t) {
                     return false;
                 }

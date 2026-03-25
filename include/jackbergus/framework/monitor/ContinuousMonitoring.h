@@ -22,8 +22,10 @@
 #include <jackbergus/framework/types/NativeTypes.h>
 #include <narcissus/lightweight_any.h>
 
-namespace  jackbergus {
-    namespace framework {
+#include <jackbergus/framework/monitor/AbstractVariableMonitor.h>
+
+
+    namespace jackbergus::framework {
         template<typename Type>
         struct VariableMonitoring {
             FinestScaleTimeRepreentation start_time;
@@ -47,14 +49,14 @@ start_time = x.start_time;
 
         using AnyVariableMonitoring = jackbergus::framework::VariableMonitoring<lightweight_any>;
 
-
-        class ContinuousMonitoring {
+        template <typename T>
+        class ContinuousMonitoring : public AbstractVariableMonitor<T> {
         public:
             virtual void clearFile() = 0;
             virtual void setFile(const std::string& FileName) = 0;
             virtual bool setInvalidValue(jackbergus::framework::FinestScaleTimeRepreentation curr_t) = 0;
         };
     }
-}
+
 
 #endif //GENERALFRAMEWORK_CONTINUOUSMONITORING_H

@@ -38,7 +38,10 @@ add_library(GeneralFramework STATIC examples/example_record_serialization.cpp
         include/jackbergus/framework/monitor/AnyFundamentalVariableMonitoring.h
         include/jackbergus/framework/ndp/FileBlockWrapper.h
         include/jackbergus/framework/ndp/FileBlockReader.h
-        include/jackbergus/framework/ndp/AnyStructMonitoring.h)
+        include/jackbergus/framework/ndp/AnyStructMonitoring.h
+        include/jackbergus/concurrency/RWLock.h
+        include/jackbergus/framework/monitor/VariableMonitor.h
+        include/jackbergus/framework/monitor/AbstractVariableMonitor.h)
 
 
 add_executable(main examples/example_record_serialization.cpp)
