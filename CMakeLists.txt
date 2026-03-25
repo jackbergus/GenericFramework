@@ -19,7 +19,7 @@ include_directories(submodules/narcissus/submodule/field-reflection/include)
 include_directories(submodules/narcissus/submodule/magic_enum/include)
 
 
-add_library(GeneralFramework STATIC main.cpp
+add_library(GeneralFramework STATIC examples/example_record_serialization.cpp
         src/jackbergus/framework/Controller.cpp
         include/jackbergus/framework/Controller.h
         include/jackbergus/framework/structures/ControllerRequest.h
@@ -37,10 +37,11 @@ add_library(GeneralFramework STATIC main.cpp
         src/jackbergus/framework/monitor/NativeTypeMonitoring.cpp
         include/jackbergus/framework/monitor/AnyFundamentalVariableMonitoring.h
         include/jackbergus/framework/ndp/FileBlockWrapper.h
-        include/jackbergus/framework/ndp/FileBlockReader.h)
+        include/jackbergus/framework/ndp/FileBlockReader.h
+        include/jackbergus/framework/ndp/AnyStructMonitoring.h)
 
 
-add_executable(main main.cpp)
+add_executable(main examples/example_record_serialization.cpp)
 target_link_libraries(main GeneralFramework)
 
 add_executable(simple_double_example examples/simple_double_example.cpp)
