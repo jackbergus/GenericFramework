@@ -1,7 +1,6 @@
 #include <iostream>
 #include <cstdint>
 #include <array>
-#include "jackbergus/data/template_typing.h"
 
 struct Element1_N {
     uint32_t val;
@@ -72,12 +71,15 @@ REFL_AUTO(type(Element1_L), field(val), field(jes), field(cho), field(voi_))
 REFL_AUTO(type(Element2_L), field(cho), field(voi_), field(val))
 REFL_AUTO(type(Final_L), field(first), field(second), field(third), field(objectivo))
 
-#include "jackbergus/data/recursive_encoder.h"
+#include "jackbergus/data/UpdatableElement.h"
 
 int main() {
-    Final_L f_src;
+    // Final_L f_src;
     Final_L f_dst;
     Final_N f_swap, f_swap2;
+
+    UpdatableElement<Final_L, Final_N> memory_binder;
+
 
     // constexpr auto val = get_field2<Elements, 0>::name;
     // static_assert(std::is_same_v<get_field_type<Elements, 0>, int>);
@@ -85,25 +87,32 @@ int main() {
     static_assert(is_same<uint8_t, BasicEnumo::T>::value);
     std::vector<std::function<void()>> elementi;
 
-    encode_extended(&f_swap, f_src);
-    encode_extended(&f_swap2, f_src);
+    memory_binder.associateWithRawMemory(&f_swap);
+    memory_binder.associateWithRawMemory(&f_swap2);
+
+    // encode_extended(&f_swap, f_src);
+    // encode_extended(&f_swap2, f_src);
     // f_src.second.fill({});
-    update(f_src);
+    memory_binder.forceBroadcast();
 
     // Now, attempting to change the raw by just setting the logical!
-    f_src.third = 133;
-    f_src.objectivo  = Enumo::UJOZ;
-    f_src.second[3].cho = 42;
-    f_src.second[3].voi_ = 42;
+    memory_binder.setBit(0);
+    memory_binder.data.third = 133;
+    memory_binder.data.objectivo  = Enumo::UJOZ;
+    memory_binder.data.second[3].cho = 42;
+    memory_binder.data.second[3].voi_ = 42;
 
-    f_src.first.jes = (float) 1.23;
-    f_src.first.val = (float) 1.35;
-    f_src.first.cho = 123;
-    f_src.first.voi_ = 123;
+    memory_binder.setBit(1);
+    memory_binder.data.first.jes = (float) 1.23;
+    memory_binder.data.first.val = (float) 1.35;
+    memory_binder.data.first.cho = 123;
+    memory_binder.clearBits();
+    memory_binder.data.first.voi_ = 123;
 
+    memory_binder.serialize_to_csv(std::cout, {"third", "objectivo", "first.cho", "ambara", "bacci", "second[3].cho", "second[3].voi_"});
 
     // encode(f_swap, f_src);
-    decode(f_dst, f_swap);
+    // decode(f_dst, f_swap);
 
     // std::cout << encode(network, src) << std::endl;
     // std::cout << decode(dst, network) << std::endl;

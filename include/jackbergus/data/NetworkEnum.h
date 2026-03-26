@@ -21,7 +21,9 @@
 #include <type_traits>
 #include <vector>
 #include <functional>
+#include <iomanip>
 
+#include "../../../submodules/narcissus/submodule/magic_enum/include/magic_enum/magic_enum.hpp"
 #include "jackbergus/data/packed.h"
 
 PACK(struct _enum {});
@@ -72,6 +74,11 @@ struct Enum : public _enum {
 
     void addObserver(std::function<void()> f) {
         observers.emplace_back(f);
+    }
+    [[nodiscard]] std::string to_string() const {
+        std::stringstream ss;
+        ss << std::quoted(magic_enum::enum_name(value));
+        return ss.str();
     }
 
 private:

@@ -58,7 +58,8 @@ target_link_libraries(main GeneralFramework)
 add_executable(simple_double_example examples/simple_double_example.cpp)
 target_link_libraries(simple_double_example GeneralFramework)
 
-add_executable(example_for_record_updates examples/example_for_record_updates.cpp)
+add_executable(example_for_record_updates examples/example_for_record_updates.cpp
+        include/jackbergus/data/UpdatableElement.h)
 target_link_libraries(example_for_record_updates GeneralFramework)
 
 add_executable(example_record_serialization examples/example_record_serialization.cpp)

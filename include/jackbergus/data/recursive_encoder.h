@@ -38,17 +38,82 @@ using get_field2 = typename refl::descriptor::member_descriptor_base<T, idx>;
 template<typename T, typename V>
 bool encode(T &dst, const V &src);
 
+struct FilterMap {
+    virtual ~FilterMap() =default;
+    virtual bool isCurrentElementInMap(uint64_t map) = 0;
+    virtual void setBit(uint64_t bit) = 0;
+    virtual void offbit(uint64_t bit) = 0;
+};
+
 template<typename T, typename V>
-bool encode_extended(T* dst, V &src);
+bool encode_extended(T* dst, V &src, uint64_t current_bit, FilterMap* filtermap);
 
 template<typename V>
 bool update(V &src);
 
+template<typename V>
+void serialize(const V &src, const std::string& stack, std::unordered_map<std::string, std::string>& out);
+
 template<typename T, typename V>
 bool decode(T &dst, const V &src);
 
+template<typename V>
+void collect_field_names(V &src, const std::string& stack, std::vector<std::string>& result);
+
 template<typename T, typename U, int x, int to>
 struct static_for {
+
+
+    void serialize(const U &src, const std::string& stack, std::unordered_map<std::string, std::string>& out) {
+        auto current = std::string(refl::trait::get_t<x, refl::member_list<U> >::name.data);
+        if (!stack.empty())
+            current = stack + "." + current;
+        using TIth = get_field_type<T, x>;
+        if constexpr (is_std_array<TIth>::value) {
+            for (uint64_t i = 0, N = std_array_size<TIth>::size; i<N; i++) {
+                auto local = current + "[" + std::to_string(i)+"]";
+                (::serialize(get_field_t<U, x>::get(src)[i], local, out));
+            }
+        } else if constexpr (std::is_base_of<_float, TIth>::value) {
+            out[current] = get_field_t<U, x>::get(src).to_string();
+        } else if constexpr (std::is_base_of<_enum, TIth>::value) {
+            out[current] = get_field_t<U, x>::get(src).to_string();
+        } else if constexpr (std::is_base_of<_int, TIth>::value) {
+            out[current] = get_field_t<U, x>::get(src).to_string();
+        } else if constexpr (!std::is_fundamental<TIth>::value) {
+            (::serialize(get_field_t<U, x>::get(src), current, out));
+            // val = encode(get_field_t<T, x>::get(dst), get_field_t<U, x>::get(src));
+        }
+        static_for<T, U, x + 1, to>{}.serialize(src, stack, out);
+    }
+
+    void collect_field_names(U &src, const std::string& stack, std::vector<std::string>& result) {
+        auto current = std::string(refl::trait::get_t<x, refl::member_list<U> >::name.data);
+        if (!stack.empty())
+            current = stack + "." + current;
+        using TIth = get_field_type<T, x>;
+        // using UIth = get_field_type<U, x>;
+        // auto ifFloat = std::is_base_of<_float, UIth>::value;
+        // auto ifInt = std::is_base_of<_int, UIth>::value;
+
+        if constexpr (is_std_array<TIth>::value) {
+            for (uint64_t i = 0, N = std_array_size<TIth>::size; i<N; i++) {
+                auto local = current + "[" + std::to_string(i)+"]";
+                (::collect_field_names(get_field_t<U, x>::get(src)[i], local, result));
+            }
+        } else if constexpr (std::is_base_of<_float, TIth>::value) {
+            result.emplace_back(current);
+        } else if constexpr (std::is_base_of<_enum, TIth>::value) {
+            result.emplace_back(current);
+        } else if constexpr (std::is_base_of<_int, TIth>::value) {
+            result.emplace_back(current);
+        } else if constexpr (!std::is_fundamental<TIth>::value) {
+            (::collect_field_names(get_field_t<U, x>::get(src), current, result));
+            // val = encode(get_field_t<T, x>::get(dst), get_field_t<U, x>::get(src));
+        }
+        static_for<T, U, x + 1, to>{}.collect_field_names(src, stack, result);
+    }
+
     bool decode(const T &src, U &dst) {
         auto val = static_for<T, U, x + 1, to>{}.decode(src, dst);
         using TIth = get_field_type<T, x>;
@@ -109,8 +174,8 @@ struct static_for {
         return val;
     }
 
-    bool encode_extended(T* dst, U &src) {
-        auto val = static_for<T, U, x + 1, to>{}.encode_extended(dst, src);
+    bool encode_extended(T* dst, U &src, uint64_t current_bit, FilterMap* filtermap) {
+        auto val = static_for<T, U, x + 1, to>{}.encode_extended(dst, src, current_bit, filtermap);
         using TIth = get_field_type<T, x>;
         using UIth = get_field_type<U, x>;
         auto ifFloat = std::is_base_of<_float, UIth>::value;
@@ -118,18 +183,22 @@ struct static_for {
 
         if constexpr (is_std_array<UIth>::value && std::is_array<TIth>::value) {
             for (uint64_t i = 0, N = std_array_size<UIth>::size; i<N; i++) {
-                 (::encode_extended(&get_field_t<T, x>::get(*dst)[i], get_field_t<U, x>::get(src)[i]));
+                 (::encode_extended(&get_field_t<T, x>::get(*dst)[i], get_field_t<U, x>::get(src)[i],  current_bit, filtermap));
             }
         } else if constexpr (std::is_base_of<_float, UIth>::value && std::is_integral<TIth>::value) {
-            auto f = [&src,dst]() {
-                auto val_ = get_field_t<U, x>::get(src).encode();
-                get_field_t<T, x>::get(*dst) = val_;
+            auto f = [&src,dst,current_bit,filtermap]() {
+                if (filtermap && (filtermap->isCurrentElementInMap(current_bit))) {
+                    auto val_ = get_field_t<U, x>::get(src).encode();
+                    get_field_t<T, x>::get(*dst) = val_;
+                }
             };
             get_field_t<U, x>::get(src).addObserver((f));
         } else if constexpr (std::is_base_of<_enum, UIth>::value) {
             if constexpr (std::is_same<TIth, typename UIth::T>::value) {
-                auto f = [&src,dst]() {
-                    get_field_t<T, x>::get(*dst) = (typename UIth::T)(get_field_t<U, x>::get(src));
+                auto f = [&src,dst,current_bit,filtermap]() {
+                    if (filtermap && (filtermap->isCurrentElementInMap(current_bit))) {
+                        get_field_t<T, x>::get(*dst) = (typename UIth::T)(get_field_t<U, x>::get(src));
+                    }
                 };
                 get_field_t<U, x>::get(src).addObserver((f));
             } else {
@@ -137,16 +206,18 @@ struct static_for {
             }
         } else if constexpr (std::is_base_of<_int, UIth>::value) {
             if constexpr (std::is_same<TIth, typename UIth::T>::value) {
-                auto f = [&src,dst]() {
-                    auto val_ = get_field_t<U, x>::get(src).encode();
-                    get_field_t<T, x>::get(*dst) = val_;
+                auto f = [&src,dst,current_bit,filtermap]() {
+                    if (filtermap && (filtermap->isCurrentElementInMap(current_bit))) {
+                        auto val_ = get_field_t<U, x>::get(src).encode();
+                        get_field_t<T, x>::get(*dst) = val_;
+                    }
                 };
                 get_field_t<U, x>::get(src).addObserver((f));
             } else {
                 val = false;
             }
         } else if constexpr (!std::is_fundamental<TIth>::value && !std::is_fundamental<UIth>::value) {
-            ::encode_extended(&get_field_t<T, x>::get(*dst), get_field_t<U, x>::get(src));
+            ::encode_extended(&get_field_t<T, x>::get(*dst), get_field_t<U, x>::get(src), current_bit, filtermap);
             // val = encode(get_field_t<T, x>::get(dst), get_field_t<U, x>::get(src));
         } else {
             val = false;
@@ -195,7 +266,14 @@ struct static_for {
 template<typename T, typename U, int to>
 struct static_for<T, U, to, to> {
 
-    bool encode_extended(T* dst, const U &src) {
+
+    void serialize(const U &src, const std::string& stack, std::unordered_map<std::string, std::string>& out) {
+    }
+
+    void collect_field_names(U &src, const std::string& stack, std::vector<std::string>& result) {
+    }
+
+    bool encode_extended(T* dst, const U &src, uint64_t current_bit, FilterMap* filtermap) {
         return true;
     }
 
@@ -226,12 +304,38 @@ bool update(V &src) {
     return static_for<V, V, 0, refl::member_list<V>::size>{}.update(src);
 }
 
+
+template<typename V>
+void collect_field_names(V &src, const std::string& stack, std::vector<std::string>& result) {
+    static_for<V, V, 0, refl::member_list<V>::size>{}.collect_field_names(src, stack, result);
+}
+
+
+template<typename V>
+void serialize(const V &src, const std::string& stack, std::unordered_map<std::string, std::string>& out) {
+    static_for<V, V, 0, refl::member_list<V>::size>{}.serialize(src, stack, out);
+}
+
+template<typename V>
+std::vector<std::string> collect_field_names(V &src) {
+    const std::string stack{};
+    std::vector<std::string> result{};
+    static_for<V, V, 0, refl::member_list<V>::size>{}.collect_field_names(src, stack, result);
+    return result;
+}
+
+template<typename V>
+void serialize(const V &src, std::unordered_map<std::string, std::string>& out) {
+    const std::string stack{};
+    static_for<V, V, 0, refl::member_list<V>::size>{}.serialize(src, stack, out);
+}
+
 template<typename T, typename V>
-bool encode_extended(T* dst, V &src) {
+bool encode_extended(T* dst, V &src, uint64_t current_bit, FilterMap* filtermap) {
     if constexpr (refl::member_list<T>::size != refl::member_list<V>::size) {
         return false;
     } else {
-        return static_for<T, V, 0, refl::member_list<V>::size>{}.encode_extended(dst, src);
+        return static_for<T, V, 0, refl::member_list<V>::size>{}.encode_extended(dst, src, current_bit, filtermap);
     }
 }
 

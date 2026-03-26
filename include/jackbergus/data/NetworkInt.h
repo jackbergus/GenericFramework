@@ -25,6 +25,7 @@
 #include <cstdint>
 #include <cmath>
 #include <algorithm>
+#include <ostream>
 
 PACK(struct _int {});
 
@@ -90,6 +91,10 @@ template <typename int_type = int32_t,
     void update() {
         for (auto& ref : observers)
             ref();
+    }
+
+    [[nodiscard]] std::string to_string() const {
+        return std::to_string(value);
     }
 
     /**

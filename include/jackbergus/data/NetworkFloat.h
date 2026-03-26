@@ -96,6 +96,10 @@ template <typename i32_type,
         observers.emplace_back(f);
     }
 
+    [[nodiscard]] std::string to_string() const {
+        return std::to_string(value);
+    }
+
 private:
     float value;
     std::vector<std::function<void()>> observers;
