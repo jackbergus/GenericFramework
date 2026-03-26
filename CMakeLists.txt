@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 4.0)
 project(GeneralFramework)
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 17)
 
 #IF(CMAKE_BUILD_TYPE MATCHES Debug)
 #    message(WARNING "Compiling in debug mode")
@@ -13,10 +13,12 @@ set(CMAKE_CXX_STANDARD 20)
 #ENDIF(CMAKE_BUILD_TYPE MATCHES Debug)
 
 include_directories(include)
-
+include_directories(submodules/fkYAML/include)
+include_directories(submodules/refl-cpp/include)
+include_directories(submodules/magic_enum/include)
 include_directories(submodules/narcissus/include)
-include_directories(submodules/narcissus/submodule/field-reflection/include)
-include_directories(submodules/narcissus/submodule/magic_enum/include)
+#include_directories(submodules/narcissus/submodule/field-reflection/include)
+#include_directories(submodules/narcissus/submodule/magic_enum/include)
 
 add_subdirectory(submodules/vxworks_linux/)
 
@@ -46,7 +48,8 @@ add_library(GeneralFramework STATIC examples/example_record_serialization.cpp
         src/jackbergus/concurrency/ThreadPool.cpp
         include/jackbergus/concurrency/ThreadPool.h
         src/jackbergus/concurrency/HoareMonitor.cpp
-        include/jackbergus/concurrency/HoareMonitor.h)
+        include/jackbergus/concurrency/HoareMonitor.h
+        src/jackbergus/data/FltForTemplateParam.cpp)
 
 
 add_executable(main examples/example_record_serialization.cpp)
@@ -54,3 +57,9 @@ target_link_libraries(main GeneralFramework)
 
 add_executable(simple_double_example examples/simple_double_example.cpp)
 target_link_libraries(simple_double_example GeneralFramework)
+
+add_executable(example_for_record_updates examples/example_for_record_updates.cpp)
+target_link_libraries(example_for_record_updates GeneralFramework)
+
+add_executable(example_record_serialization examples/example_record_serialization.cpp)
+target_link_libraries(example_record_serialization GeneralFramework)

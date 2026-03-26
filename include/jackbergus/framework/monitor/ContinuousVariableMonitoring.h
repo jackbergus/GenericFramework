@@ -32,7 +32,7 @@ namespace jackbergus {
 
         template <typename Type>
         class ContinuousVariableMonitoring : public  ContinuousMonitoring<Type> {
-            FinestScaleTimeRepreentation start_time, end_time_inclusive;
+            FinestScaleTimeRepresentation start_time, end_time_inclusive;
             Type current_value;
             bool is_value_valid;
 
@@ -96,13 +96,16 @@ namespace jackbergus {
             }
 
         public:
-            ContinuousVariableMonitoring(FinestScaleTimeRepreentation start_time) : start_time(start_time), end_time_inclusive(start_time), is_value_valid(false), file_serialized{nullptr} {}
-            ContinuousVariableMonitoring(FinestScaleTimeRepreentation start_time, const Type& value) : start_time(start_time), end_time_inclusive(start_time), current_value(value), is_value_valid(true), file_serialized{nullptr} {}
+            ContinuousVariableMonitoring(FinestScaleTimeRepresentation start_time) : start_time(start_time), end_time_inclusive(start_time), is_value_valid(false), file_serialized{nullptr} {}
+            ContinuousVariableMonitoring(FinestScaleTimeRepresentation start_time, const Type& value) : start_time(start_time), end_time_inclusive(start_time), current_value(value), is_value_valid(true), file_serialized{nullptr} {}
 
             ContinuousVariableMonitoring(const ContinuousVariableMonitoring<Type>& other) = default;
             ContinuousVariableMonitoring(ContinuousVariableMonitoring<Type>&& other) = default;
             ContinuousVariableMonitoring& operator=(const ContinuousVariableMonitoring<Type>& other) = default;
             ContinuousVariableMonitoring& operator=(ContinuousVariableMonitoring<Type>&& other) = default;
+            ~ContinuousVariableMonitoring() {
+                clearFile();
+            }
 
             void clearFile() override {
                 if (file_serialized) {
@@ -116,7 +119,7 @@ namespace jackbergus {
                 file_serialized = std::make_unique<FileSerializer<>>(FileName);
             }
 
-            bool setInvalidValue(FinestScaleTimeRepreentation curr_t) override {
+            bool setInvalidValue(FinestScaleTimeRepresentation curr_t) override {
                 if (end_time_inclusive > curr_t) {
                     return false;
                 }
@@ -134,7 +137,7 @@ namespace jackbergus {
                 }
             }
 
-            [[nodiscard]] const FinestScaleTimeRepreentation getCurrentTime() const  override {
+            [[nodiscard]] const FinestScaleTimeRepresentation getCurrentTime() const  override {
                 return end_time_inclusive;
             };
             [[nodiscard]] bool isCurrentlyValid() const override {
@@ -144,7 +147,7 @@ namespace jackbergus {
                 return is_value_valid ? (void*)&current_value : nullptr;
             };
 
-            bool updateValue(FinestScaleTimeRepreentation curr_t,
+            bool updateValue(FinestScaleTimeRepresentation curr_t,
                              const Type& value) override {
                 return updateValue(curr_t, value, {});
             }
@@ -156,7 +159,7 @@ namespace jackbergus {
              * @param t Optional equality predicate. If missing, it is using the default one
              * @return Whether the value was successfully updated
              */
-            bool updateValue(FinestScaleTimeRepreentation curr_t,
+            bool updateValue(FinestScaleTimeRepresentation curr_t,
                              const Type& value,
                              const std::equal_to<Type>& t) {
                 if (end_time_inclusive > curr_t) {

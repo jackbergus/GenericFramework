@@ -10,42 +10,49 @@
 #include <cstdint>
 #include <vector>
 
-#include <field_reflection.hpp>
+//#include <field_reflection.hpp> Removed. as it was not compatible with C++17 TODO: conditional compiling depending on the version of C++
+#include "refl.hpp"
 
 #include <jackbergus/framework/monitor/AnyFundamentalVariableMonitoring.h>
+
+#include "jackbergus/data/recursive_encoder.h"
+
+#include <fkYAML/node.hpp>
 
 namespace jackbergus {
     namespace framework {
 
         template<typename T, int x, int to, uint64_t block_size = 1024>
 struct static_for {
-            std::vector<AnyFundamentalVariableMonitoring<block_size>> expandWithBasicMonitor(jackbergus::framework::FinestScaleTimeRepreentation start_time) {
+            std::vector<AnyFundamentalVariableMonitoring<block_size>> expandWithBasicMonitor(jackbergus::framework::FinestScaleTimeRepresentation start_time) {
                 auto result = static_for<T, x+1,to>().expandWithBasicMonitor(start_time);
-                auto view = field_reflection::field_name<T, x>;
-                result.emplace_back(flatten_type_to_enum<field_reflection::field_type<T, x>>(start_time, x, std::string(view.data(), view.size())));
+                auto view = std::string(refl::trait::get_t<x, refl::member_list<T>>::name.c_str());
+                using K = typename refl::trait::get_t<x, refl::member_list<T>>::value_type;
+                result.emplace_back(flatten_type_to_enum<K>(start_time, x, view));
                 return result;
             }
 
-            bool setRecursivelyWithTemplates(jackbergus::framework::FinestScaleTimeRepreentation start_time, const T& value, std::vector<jackbergus::framework::AnyFundamentalVariableMonitoring<block_size>>& f) {
+            bool setRecursivelyWithTemplates(jackbergus::framework::FinestScaleTimeRepresentation start_time, const T& value, std::vector<jackbergus::framework::AnyFundamentalVariableMonitoring<block_size>>& f) {
                 auto val_rec = static_for<T, x+1,to>().setRecursivelyWithTemplates(start_time, value, f);
-                auto val = field_reflection::get_field<x>(value);
+                auto val = get_field_t<T, x>::get(value);
+                // auto val = field_reflection::get_field<x>(value);
                 return f[x].updateValue(start_time, val) ? val_rec : false;
             }
         };
 
         template<typename T, int to, uint64_t block_size>
         struct static_for<T, to,to, block_size> {
-            std::vector<jackbergus::framework::AnyFundamentalVariableMonitoring<block_size>> expandWithBasicMonitor(jackbergus::framework::FinestScaleTimeRepreentation start_time) {
+            std::vector<jackbergus::framework::AnyFundamentalVariableMonitoring<block_size>> expandWithBasicMonitor(jackbergus::framework::FinestScaleTimeRepresentation start_time) {
                 return {};
             }
 
-            bool setRecursivelyWithTemplates(jackbergus::framework::FinestScaleTimeRepreentation start_time, const T& value, std::vector<jackbergus::framework::AnyFundamentalVariableMonitoring<block_size>>& f) {
+            bool setRecursivelyWithTemplates(jackbergus::framework::FinestScaleTimeRepresentation start_time, const T& value, std::vector<jackbergus::framework::AnyFundamentalVariableMonitoring<block_size>>& f) {
                 return true;
             }
         };
 
-        template <typename  T, uint64_t block_size=1024> std::vector<jackbergus::framework::AnyFundamentalVariableMonitoring<block_size>> getNativeType(jackbergus::framework::FinestScaleTimeRepreentation start_time) {
-            auto v = static_for<T, 0, field_reflection::field_count<T>>{}.expandWithBasicMonitor(start_time);
+        template <typename  T, uint64_t block_size=1024> std::vector<jackbergus::framework::AnyFundamentalVariableMonitoring<block_size>> getNativeType(jackbergus::framework::FinestScaleTimeRepresentation start_time) {
+            auto v = static_for<T, 0, refl::member_list<T>::size>{}.expandWithBasicMonitor(start_time);
             std::reverse(v.begin(), v.end());
             return v;
         }
@@ -60,11 +67,11 @@ struct static_for {
 
             std::vector<jackbergus::framework::AnyFundamentalVariableMonitoring<block_size>> fields;
         public:
-            constexpr static uint64_t field_count = field_reflection::field_count<T>;
+            constexpr static uint64_t field_count = refl::member_list<T>::size; //field_reflection::field_count<T>;
             using validity_vector = std::array<bool, field_count>;
 
-            [[nodiscard]] const FinestScaleTimeRepreentation getCurrentTime() const  override {
-                FinestScaleTimeRepreentation t = 0;
+            [[nodiscard]] const FinestScaleTimeRepresentation getCurrentTime() const  override {
+                FinestScaleTimeRepresentation t = 0;
                 for (const auto& ref : fields) {
                     if (ref.validityInterval().second > t) {
                         t = ref.validityInterval().second;
@@ -84,7 +91,7 @@ struct static_for {
                 throw std::invalid_argument("getRawPtr()");
             }
 
-            bool setInvalidValue(jackbergus::framework::FinestScaleTimeRepreentation curr_t) override {
+            bool setInvalidValue(jackbergus::framework::FinestScaleTimeRepresentation curr_t) override {
                 auto result = true;
                 for (auto& ref : fields) {
                     if (!ref.setInvalidValue(curr_t))
@@ -93,24 +100,27 @@ struct static_for {
                 return result;
             }
 
-            bool updateValue(jackbergus::framework::FinestScaleTimeRepreentation curr_t,
+            bool updateValue(jackbergus::framework::FinestScaleTimeRepresentation curr_t,
                              const T& value)  override {
-                return static_for<T, 0, field_reflection::field_count<T>>{}.setRecursivelyWithTemplates(curr_t, value, fields);
+                return static_for<T, 0, refl::member_list<T>::size>{}.setRecursivelyWithTemplates(curr_t, value, fields);
             }
 
-            AnyStructMonitoring(jackbergus::framework::FinestScaleTimeRepreentation start_time) {
+            AnyStructMonitoring(jackbergus::framework::FinestScaleTimeRepresentation start_time) {
                 fields = getNativeType<T>(start_time);
                 setInvalidValue(start_time);
             }
 
-            AnyStructMonitoring(jackbergus::framework::FinestScaleTimeRepreentation start_time, const T& value) {
+            AnyStructMonitoring(jackbergus::framework::FinestScaleTimeRepresentation start_time, const T& value) {
                 fields = getNativeType<T>(start_time);
                 updateValue(start_time, value);
             }
 
-            virtual ~AnyStructMonitoring() {}
+            virtual ~AnyStructMonitoring() {
+                clearFile();
+            }
 
             void clearFile() override {
+                fkyaml::node node;
                 for (auto& ref : fields) {
                     ref.clearFile();
                 }
@@ -119,7 +129,7 @@ struct static_for {
             void setFile(const std::string& FileName) override {
                 clearFile();
                 for (auto& field : fields) {
-                    field.setFile(FileName+"_"+field.field_name()+".bin");
+                    field.setFile(FileName+"_"+field.field_name()+"["+std::string( magic_enum::enum_name(field.field_type()))+"["+std::to_string(field.native_size())+"]].bin");
                 }
             }
         };

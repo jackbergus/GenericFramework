@@ -28,11 +28,11 @@
     namespace jackbergus::framework {
         template<typename Type>
         struct VariableMonitoring {
-            FinestScaleTimeRepreentation start_time;
-            FinestScaleTimeRepreentation end_time_inclusive;
+            FinestScaleTimeRepresentation start_time;
+            FinestScaleTimeRepresentation end_time_inclusive;
             Type value;
 
-            VariableMonitoring(FinestScaleTimeRepreentation st = 0, FinestScaleTimeRepreentation et = 0, Type v = {}) : start_time(st), end_time_inclusive(et), value(v) {}
+            VariableMonitoring(FinestScaleTimeRepresentation st = 0, FinestScaleTimeRepresentation et = 0, Type v = {}) : start_time(st), end_time_inclusive(et), value(v) {}
             VariableMonitoring(const VariableMonitoring& x) : start_time(x.start_time), end_time_inclusive(x.end_time_inclusive), value(x.value) {}
             VariableMonitoring(VariableMonitoring&& x)  : start_time(x.start_time), end_time_inclusive(x.end_time_inclusive), value(x.value) {}
             VariableMonitoring& operator=(const VariableMonitoring& x) {
@@ -54,7 +54,7 @@ start_time = x.start_time;
         public:
             virtual void clearFile() = 0;
             virtual void setFile(const std::string& FileName) = 0;
-            virtual bool setInvalidValue(jackbergus::framework::FinestScaleTimeRepreentation curr_t) = 0;
+            virtual bool setInvalidValue(jackbergus::framework::FinestScaleTimeRepresentation curr_t) = 0;
         };
     }
 

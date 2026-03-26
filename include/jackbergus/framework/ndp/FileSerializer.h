@@ -28,8 +28,8 @@
 namespace jackbergus {
     namespace framework {
         struct BlockHeader {
-            FinestScaleTimeRepreentation start;
-            FinestScaleTimeRepreentation end;
+            FinestScaleTimeRepresentation start;
+            FinestScaleTimeRepresentation end;
             uint8_t                      start_validity ;
             uint8_t                      end_validity ;
             char                         logger_record[126];

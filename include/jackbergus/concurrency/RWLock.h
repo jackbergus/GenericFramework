@@ -61,7 +61,7 @@ namespace jackbergus::concurrency {
                 }
             }
 
-            virtual bool setInvalidValue(jackbergus::framework::FinestScaleTimeRepreentation curr_t) override {
+            virtual bool setInvalidValue(jackbergus::framework::FinestScaleTimeRepresentation curr_t) override {
                 if (!obj)
                     return false;
                 {

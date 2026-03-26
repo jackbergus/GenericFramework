@@ -4,3 +4,15 @@
 [submodule "submodules/vxworks_linux"]
 	path = submodules/vxworks_linux
 	url = https://github.com/jackbergus/vxworks-emulation-layer/
+[submodule "submodules/magic_enum"]
+	path = submodules/magic_enum
+	url = https://github.com/Neargye/magic_enum
+[submodule "submodules/narcissus"]
+	path = submodules/narcissus
+	url = https://github.com/LogDS/narcissus.git
+[submodule "submodules/fkYAML"]
+	path = submodules/fkYAML
+	url = https://github.com/fktn-k/fkYAML
+[submodule "submodules/refl-cpp"]
+	path = submodules/refl-cpp
+	url = https://github.com/veselink1/refl-cpp

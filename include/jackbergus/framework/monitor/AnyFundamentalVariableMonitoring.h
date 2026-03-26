@@ -17,7 +17,7 @@ namespace jackbergus {
     namespace framework {
 template <uint64_t block_size = 1024>
         class AnyFundamentalVariableMonitoring : public jackbergus::framework::ContinuousMonitoring<lightweight_any> {
-            jackbergus::framework::FinestScaleTimeRepreentation start_time, end_time_inclusive;
+            jackbergus::framework::FinestScaleTimeRepresentation start_time, end_time_inclusive;
             lightweight_any current_value;
             bool is_value_valid;
             NativeTypeMonitoring type_info;
@@ -82,8 +82,8 @@ template <uint64_t block_size = 1024>
             }
 
         public:
-            AnyFundamentalVariableMonitoring(jackbergus::framework::FinestScaleTimeRepreentation start_time,  NativeTypeMonitoring&& type) : start_time(start_time), type_info{std::move(type)},  end_time_inclusive(start_time), is_value_valid(false), file_serialized{nullptr} {}
-            AnyFundamentalVariableMonitoring(jackbergus::framework::FinestScaleTimeRepreentation start_time,  NativeTypeMonitoring&& type, const lightweight_any& value) : type_info{std::move(type)},  start_time(start_time), end_time_inclusive(start_time), current_value(value), is_value_valid(true), file_serialized{nullptr} {}
+            AnyFundamentalVariableMonitoring(jackbergus::framework::FinestScaleTimeRepresentation start_time,  NativeTypeMonitoring&& type) : start_time(start_time), type_info{std::move(type)},  end_time_inclusive(start_time), is_value_valid(false), file_serialized{nullptr} {}
+            AnyFundamentalVariableMonitoring(jackbergus::framework::FinestScaleTimeRepresentation start_time,  NativeTypeMonitoring&& type, const lightweight_any& value) : type_info{std::move(type)},  start_time(start_time), end_time_inclusive(start_time), current_value(value), is_value_valid(true), file_serialized{nullptr} {}
 
             AnyFundamentalVariableMonitoring(const AnyFundamentalVariableMonitoring& other) = default;
             AnyFundamentalVariableMonitoring(AnyFundamentalVariableMonitoring&& other) = default;
@@ -106,9 +106,11 @@ template <uint64_t block_size = 1024>
                 return type_info.sizeof_;
             }
 
+#if __cplusplus >= 202302L
             const std::type_index& type() const {
                 return type_info.type_i;
             }
+#endif
 
             void clearFile() override {
                 if (file_serialized) {
@@ -133,7 +135,7 @@ template <uint64_t block_size = 1024>
                 file_serialized = std::make_unique<jackbergus::framework::FileSerializer<>>(FileName);
             }
 
-            bool setInvalidValue(jackbergus::framework::FinestScaleTimeRepreentation curr_t) override {
+            bool setInvalidValue(jackbergus::framework::FinestScaleTimeRepresentation curr_t) override {
                 if (end_time_inclusive > curr_t) {
                     return false;
                 }
@@ -155,7 +157,7 @@ template <uint64_t block_size = 1024>
                 return is_value_valid;
             }
 
-            std::pair<jackbergus::framework::FinestScaleTimeRepreentation, jackbergus::framework::FinestScaleTimeRepreentation> validityInterval() const {
+            std::pair<jackbergus::framework::FinestScaleTimeRepresentation, jackbergus::framework::FinestScaleTimeRepresentation> validityInterval() const {
                 if (is_value_valid) {
                     return {start_time, end_time_inclusive};
                 } else {
@@ -174,7 +176,7 @@ template <uint64_t block_size = 1024>
                 return is_value_valid ? (T*)current_value.raw() : nullptr;
             }
 
-    [[nodiscard]] virtual const FinestScaleTimeRepreentation getCurrentTime() const {
+    [[nodiscard]] virtual const FinestScaleTimeRepresentation getCurrentTime() const {
                 return end_time_inclusive;
             }
 
@@ -182,7 +184,7 @@ template <uint64_t block_size = 1024>
         return is_value_valid ? (void*)current_value.raw() : nullptr;
     }
 
-    bool updateValue(jackbergus::framework::FinestScaleTimeRepreentation curr_t,
+    bool updateValue(jackbergus::framework::FinestScaleTimeRepresentation curr_t,
                              const lightweight_any& value) override {
                 return updateValue(curr_t, value, {});
             }
@@ -194,7 +196,7 @@ template <uint64_t block_size = 1024>
              * @param t Optional equality predicate. If missing, it is using the default one
              * @return Whether the value was successfully updated
              */
-            bool updateValue(jackbergus::framework::FinestScaleTimeRepreentation curr_t,
+            bool updateValue(jackbergus::framework::FinestScaleTimeRepresentation curr_t,
                              const lightweight_any& value,
                              const std::equal_to<lightweight_any>& t) {
                 if (end_time_inclusive > curr_t) {
@@ -227,7 +229,8 @@ template <uint64_t block_size = 1024>
 #include <magic_enum/magic_enum.hpp>
 
 template <typename T, uint64_t block_size = 1024>
-jackbergus::framework::AnyFundamentalVariableMonitoring<block_size> flatten_type_to_enum(jackbergus::framework::FinestScaleTimeRepreentation start_time, uint64_t val, const std::string& name) {
+jackbergus::framework::AnyFundamentalVariableMonitoring<block_size> flatten_type_to_enum(jackbergus::framework::FinestScaleTimeRepresentation start_time, uint64_t val, const std::string& name) {
+
     std::type_index type_i = std::type_index(typeid(T));
     // bool cond = (name == "bounded_array");
     if constexpr (std::is_same_v<T, std::string>) {

@@ -14,15 +14,15 @@ namespace jackbergus {
     namespace framework {
         template<typename Type>
         class VariableMonitor : public AbstractVariableMonitor<Type> {
-            FinestScaleTimeRepreentation t;
+            FinestScaleTimeRepresentation t;
             Type val;
             bool validity;
 
         public:
-            VariableMonitor(FinestScaleTimeRepreentation t = 0) : t(t), validity(false), val{} {}
-            VariableMonitor(FinestScaleTimeRepreentation t, const Type& val) : t(t), validity(true), val{val} {}
+            VariableMonitor(FinestScaleTimeRepresentation t = 0) : t(t), validity(false), val{} {}
+            VariableMonitor(FinestScaleTimeRepresentation t, const Type& val) : t(t), validity(true), val{val} {}
 
-            const FinestScaleTimeRepreentation getCurrentTime() const override {
+            const FinestScaleTimeRepresentation getCurrentTime() const override {
                 return t;
             }
 
@@ -34,7 +34,7 @@ namespace jackbergus {
                 return validity ? &val : nullptr;
             }
 
-            bool setInvalidValue(jackbergus::framework::FinestScaleTimeRepreentation curr_t) override {
+            bool setInvalidValue(jackbergus::framework::FinestScaleTimeRepresentation curr_t) override {
                 validity = false;
                 if (curr_t < t) {
                     return false;
@@ -43,7 +43,7 @@ namespace jackbergus {
                 return true;
             }
 
-            bool updateValue(FinestScaleTimeRepreentation curr_t,
+            bool updateValue(FinestScaleTimeRepresentation curr_t,
                              const Type& value) override {
                 if (curr_t < t) {
                     validity = false;

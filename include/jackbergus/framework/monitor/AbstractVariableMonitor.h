@@ -13,11 +13,11 @@
         class AbstractVariableMonitor {
         public:
             virtual ~AbstractVariableMonitor() = default;
-            [[nodiscard]] virtual const FinestScaleTimeRepreentation getCurrentTime() const  = 0;
+            [[nodiscard]] virtual const FinestScaleTimeRepresentation getCurrentTime() const  = 0;
             [[nodiscard]] virtual bool isCurrentlyValid() const = 0;
             [[nodiscard]] virtual void* getRawPtr() const = 0;
-            virtual bool setInvalidValue(jackbergus::framework::FinestScaleTimeRepreentation curr_t) = 0;
-            virtual bool updateValue(FinestScaleTimeRepreentation curr_t,
+            virtual bool setInvalidValue(jackbergus::framework::FinestScaleTimeRepresentation curr_t) = 0;
+            virtual bool updateValue(FinestScaleTimeRepresentation curr_t,
                              const Type& value) = 0;
         };
     } // framework

@@ -8,6 +8,7 @@
 struct ExampleStructure {
     uint64_t a, b, c, d, e;
 };
+REFL_AUTO(type(ExampleStructure), field(a), field(b), field(c), field(d), field(e))
 
 // TIP To <b>Run</b> code, press <shortcut actionId="Run"/> or click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
 int main() {
@@ -28,7 +29,7 @@ int main() {
         obj.updateValue(i, stru);
     }
 
-    jackbergus::framework::FileBlockReader<> flip("NitakungodeaMilele_a.bin");
+    jackbergus::framework::FileBlockReader<> flip("NitakungodeaMilele_a[T_U_INTEGRAL[8]].bin");
     jackbergus::framework::FileBlockWrapper<> block;
     uint64_t total = 0;
     while (flip.read(block)) {
