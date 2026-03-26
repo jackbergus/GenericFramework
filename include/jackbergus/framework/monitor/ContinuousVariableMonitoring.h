@@ -24,6 +24,8 @@
 #include <jackbergus/framework/types/NativeTypes.h>
 #include <memory>
 
+#include <fkYAML/node.hpp>
+
 #include <jackbergus/framework/ndp//FileSerializer.h>
 #include <jackbergus/framework/monitor/ContinuousMonitoring.h>
 
@@ -38,6 +40,7 @@ namespace jackbergus {
 
             std::vector<VariableMonitoring<Type>> variables;
             std::unique_ptr<FileSerializer<>> file_serialized;
+            std::string FileName_;
 
             void _pushRecordNonRecursive(VariableMonitoring<Type>&& obj) {
                 if (file_serialized) {
@@ -49,7 +52,7 @@ namespace jackbergus {
                     memset(block.logger_record, 0, sizeof(block.logger_record));
                     strncpy(block.logger_record, file_serialized->getCFileName(), std::min(file_serialized->getFileNameLen()-1, sizeof(block.logger_record)));
                     block.payload_size = sizeof(Type);
-                    file_serialized->write(block, obj);
+                    file_serialized->write(block, (void*)&obj.value, block.payload_size);
                 } else {
                     variables.emplace_back(std::move(obj));
                 }
@@ -65,7 +68,7 @@ namespace jackbergus {
                     memset(block.logger_record, 0, sizeof(block.logger_record));
                     strncpy(block.logger_record, file_serialized->getCFileName(), std::min(file_serialized->getFileNameLen()-1, sizeof(block.logger_record)));
                     block.payload_size = sizeof(Type);
-                    file_serialized->write(block, obj);
+                    file_serialized->write(block, (void*)&obj.value, block.payload_size);
                 } else {
                     variables.emplace_back(obj);
                 }
@@ -109,6 +112,36 @@ namespace jackbergus {
 
             void clearFile() override {
                 if (file_serialized) {
+                    if (!FileName_.empty())
+                    {
+                        fkyaml::node node = {{"name", FileName_},  {"fields", fkyaml::node::mapping()}};
+                        auto& field_struct = node["fields"].as_map();
+                        auto struct_field = fkyaml::node::mapping();
+                        struct_field["field_name"] = "self";
+                        std::string type_name_from_enum = "_not_supported_";
+                        if constexpr (std::is_integral<Type>::value) {
+                            if constexpr (std::is_signed<Type>::value) {
+                                type_name_from_enum = std::string( magic_enum::enum_name(type_cases::T_SIGNED_INTEGRAL));
+                            } else {
+                                type_name_from_enum = std::string( magic_enum::enum_name(type_cases::T_U_INTEGRAL));
+                            }
+                        } else if constexpr (std::is_floating_point<Type>::value) {
+                            if constexpr (std::is_signed<Type>::value) {
+                                type_name_from_enum = std::string( magic_enum::enum_name(type_cases::T_SIGNED_FLOAT));
+                            } else {
+                                type_name_from_enum = std::string( magic_enum::enum_name(type_cases::T_U_FLOAT));
+                            }
+                        } else if constexpr (std::is_enum<Type>::value) {
+                            type_name_from_enum = std::string( magic_enum::enum_name(type_cases::T_ENUM));
+                        }
+                        struct_field["field_type"] = type_name_from_enum;
+
+                        struct_field["field_type_native_size"] = sizeof(Type);
+                        struct_field["binary"] = FileName_+"_self["+type_name_from_enum+"["+std::to_string(sizeof(Type))+"]].bin";
+                        field_struct["self"] = struct_field;
+                        std::ofstream f{FileName_+".yaml"};
+                        f << node << std::endl;
+                    }
                     file_serialized->close();
                     file_serialized = nullptr;
                 }
@@ -116,6 +149,7 @@ namespace jackbergus {
 
             void setFile(const std::string& FileName) override {
                 clearFile();
+                FileName_ = FileName;
                 file_serialized = std::make_unique<FileSerializer<>>(FileName);
             }
 

@@ -34,7 +34,7 @@ namespace jackbergus {
             uint8_t                      end_validity ;
             char                         logger_record[126];
             uint64_t                     payload_size;
-        };
+        } __attribute__((__packed__));
 
         /**
          * File Serialization in a block-wise structure, so to better read contiguously the file by block size without any requirement for memory mapping or the like.

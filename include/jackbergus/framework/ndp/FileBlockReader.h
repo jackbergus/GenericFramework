@@ -19,8 +19,23 @@ namespace jackbergus {
         template <uint64_t block_size = 1024>
         struct FileBlockReader {
             FileBlockReader() : filp{nullptr} {}
-            FileBlockReader(const std::string& filename) {
+            FileBlockReader(const std::string& filename) : filp{nullptr} {
+                open(filename);
+            }
+
+            void open(const std::string& filename) {
+                if (filp) {
+                    fclose(filp);
+                }
+                filp = nullptr;
                 filp = fopen(filename.c_str(), "rb");
+            }
+
+            void close() {
+                if (filp) {
+                    fclose(filp);
+                }
+                filp = nullptr;
             }
 
             bool read(FileBlockWrapper<block_size>& out) {
@@ -31,10 +46,7 @@ namespace jackbergus {
             }
 
             ~FileBlockReader() {
-                if (filp) {
-                    fclose(filp);
-                }
-                filp = nullptr;
+                close();
             }
 
         private:

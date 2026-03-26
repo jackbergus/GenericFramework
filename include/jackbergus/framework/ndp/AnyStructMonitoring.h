@@ -66,6 +66,7 @@ struct static_for {
                 class AnyStructMonitoring : public jackbergus::framework::ContinuousMonitoring<T> {
 
             std::vector<jackbergus::framework::AnyFundamentalVariableMonitoring<block_size>> fields;
+            std::string FileName_;
         public:
             constexpr static uint64_t field_count = refl::member_list<T>::size; //field_reflection::field_count<T>;
             using validity_vector = std::array<bool, field_count>;
@@ -120,14 +121,28 @@ struct static_for {
             }
 
             void clearFile() override {
-                fkyaml::node node;
+                fkyaml::node node = {{"name", FileName_},  {"fields", fkyaml::node::mapping()}};
+                auto& field_struct = node["fields"].as_map();
                 for (auto& ref : fields) {
+                    std::string val = ref.field_name();
+                    auto struct_field = fkyaml::node::mapping();
+                    struct_field["field_name"] = val;
+                    struct_field["field_type"] = std::string( magic_enum::enum_name(ref.field_type()));
+                    struct_field["field_type_native_size"] = ref.native_size();
+                    struct_field["binary"] = FileName_+"_"+ref.field_name()+"["+std::string( magic_enum::enum_name(ref.field_type()))+"["+std::to_string(ref.native_size())+"]].bin";
+                    field_struct[val] = struct_field;
                     ref.clearFile();
+                }
+                if (!FileName_.empty())
+                {
+                    std::ofstream f{FileName_+".yaml"};
+                    f << node << std::endl;
                 }
             }
 
             void setFile(const std::string& FileName) override {
                 clearFile();
+                FileName_ = FileName;
                 for (auto& field : fields) {
                     field.setFile(FileName+"_"+field.field_name()+"["+std::string( magic_enum::enum_name(field.field_type()))+"["+std::to_string(field.native_size())+"]].bin");
                 }

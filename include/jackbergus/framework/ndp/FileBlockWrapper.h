@@ -53,7 +53,7 @@ struct FileBlockWrapper {
     void next(FILE* fptr) {
         int bytes = 0;
         clear();
-        if ((bytes = fread(buffer, sizeof(char), 1024, fptr)) == block_size) {
+        if ((bytes = fread(buffer, sizeof(char), block_size, fptr)) == block_size) {
             valid = true;
             _index();
         } else {
