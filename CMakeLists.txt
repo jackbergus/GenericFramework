@@ -18,6 +18,7 @@ include_directories(submodules/narcissus/include)
 include_directories(submodules/narcissus/submodule/field-reflection/include)
 include_directories(submodules/narcissus/submodule/magic_enum/include)
 
+add_subdirectory(submodules/vxworks_linux/)
 
 add_library(GeneralFramework STATIC examples/example_record_serialization.cpp
         src/jackbergus/framework/Controller.cpp
@@ -41,7 +42,11 @@ add_library(GeneralFramework STATIC examples/example_record_serialization.cpp
         include/jackbergus/framework/ndp/AnyStructMonitoring.h
         include/jackbergus/concurrency/RWLock.h
         include/jackbergus/framework/monitor/VariableMonitor.h
-        include/jackbergus/framework/monitor/AbstractVariableMonitor.h)
+        include/jackbergus/framework/monitor/AbstractVariableMonitor.h
+        src/jackbergus/concurrency/ThreadPool.cpp
+        include/jackbergus/concurrency/ThreadPool.h
+        src/jackbergus/concurrency/HoareMonitor.cpp
+        include/jackbergus/concurrency/HoareMonitor.h)
 
 
 add_executable(main examples/example_record_serialization.cpp)

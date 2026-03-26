@@ -1,3 +1,6 @@
 [submodule "narcissus"]
 	path = submodule/narcissus
 	url = https://github.com/LogDS/narcissus.git
+[submodule "submodules/vxworks_linux"]
+	path = submodules/vxworks_linux
+	url = https://github.com/jackbergus/vxworks-emulation-layer/
