@@ -190,7 +190,7 @@ template <uint64_t block_size = 1024>
                 return is_value_valid ? (T*)current_value.raw() : nullptr;
             }
 
-    [[nodiscard]] virtual const FinestScaleTimeRepresentation getCurrentTime() const {
+    [[nodiscard]] virtual const FinestScaleTimeRepresentation getCurrentTime() const override {
                 return end_time_inclusive;
             }
 

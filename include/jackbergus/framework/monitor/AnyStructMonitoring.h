@@ -102,7 +102,7 @@ struct static_for {
                 }
                 return false;
             }
-            [[nodiscard]] virtual void* getRawPtr() const {
+            [[nodiscard]] virtual void* getRawPtr() const override {
                 throw std::invalid_argument("getRawPtr()");
             }
 

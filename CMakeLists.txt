@@ -41,7 +41,7 @@ add_library(GeneralFramework STATIC examples/example_record_serialization.cpp
         include/jackbergus/framework/monitor/AnyFundamentalVariableMonitoring.h
         include/jackbergus/framework/ndp/FileBlockWrapper.h
         include/jackbergus/framework/ndp/FileBlockReader.h
-        include/jackbergus/framework/ndp/AnyStructMonitoring.h
+        include/jackbergus/framework/monitor/AnyStructMonitoring.h
         include/jackbergus/concurrency/RWLock.h
         include/jackbergus/framework/monitor/VariableMonitor.h
         include/jackbergus/framework/monitor/AbstractVariableMonitor.h
@@ -49,7 +49,11 @@ add_library(GeneralFramework STATIC examples/example_record_serialization.cpp
         include/jackbergus/concurrency/ThreadPool.h
         src/jackbergus/concurrency/HoareMonitor.cpp
         include/jackbergus/concurrency/HoareMonitor.h
-        src/jackbergus/data/FltForTemplateParam.cpp)
+        src/jackbergus/data/FltForTemplateParam.cpp
+        src/jackbergus/monitor/deserializer/FieldGetting.cpp
+        src/jackbergus/monitor/deserializer/RecordFileDeserializer.cpp
+        src/jackbergus/monitor/serializer/binary_to_csv_serializer.cpp
+)
 
 
 add_executable(main examples/example_record_serialization.cpp)
@@ -64,3 +68,4 @@ target_link_libraries(example_for_record_updates GeneralFramework)
 
 add_executable(example_record_serialization examples/example_record_serialization.cpp)
 target_link_libraries(example_record_serialization GeneralFramework)
+add_executable(signal_example examples/signal_example.cpp)
