@@ -137,7 +137,7 @@ namespace jackbergus {
                         struct_field["field_type"] = type_name_from_enum;
 
                         struct_field["field_type_native_size"] = sizeof(Type);
-                        struct_field["binary"] = FileName_+"_self["+type_name_from_enum+"["+std::to_string(sizeof(Type))+"]].bin";
+                        struct_field["binary"] = FileName_;
                         field_struct["self"] = struct_field;
                         std::ofstream f{FileName_+".yaml"};
                         f << node << std::endl;

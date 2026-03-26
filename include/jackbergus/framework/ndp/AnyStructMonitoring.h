@@ -129,7 +129,7 @@ struct static_for {
                     struct_field["field_name"] = val;
                     struct_field["field_type"] = std::string( magic_enum::enum_name(ref.field_type()));
                     struct_field["field_type_native_size"] = ref.native_size();
-                    struct_field["binary"] = FileName_+"_"+ref.field_name()+"["+std::string( magic_enum::enum_name(ref.field_type()))+"["+std::to_string(ref.native_size())+"]].bin";
+                    struct_field["binary"] = FileName_+"_"+ref.field_name()+".bin";
                     field_struct[val] = struct_field;
                     ref.clearFile();
                 }
@@ -144,7 +144,7 @@ struct static_for {
                 clearFile();
                 FileName_ = FileName;
                 for (auto& field : fields) {
-                    field.setFile(FileName+"_"+field.field_name()+"["+std::string( magic_enum::enum_name(field.field_type()))+"["+std::to_string(field.native_size())+"]].bin");
+                    field.setFile(FileName+"_"+field.field_name()+".bin");
                 }
             }
         };
