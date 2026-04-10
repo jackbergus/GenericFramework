@@ -72,6 +72,7 @@ namespace jackbergus {
                 auto idx = static_cast<uint64_t>(val);
                 if (!waiting[idx].empty()) {
                     auto ws = waiting[idx].front();
+                    waiting[idx].pop();
                     auto s = new Semaphore(0, 0);
                     urgent.push(s);
                     auto result = ws->V();
@@ -102,6 +103,7 @@ namespace jackbergus {
             HoareMonitor<CONDITIONS_ENUM> low_level_monitor;
 
         public:
+            using CS = CriticalSection<CONDITIONS_ENUM>;
             HighLevelHoareMonitor() {}
             HighLevelHoareMonitor(HighLevelHoareMonitor&&) = default;
             HighLevelHoareMonitor& operator=(HighLevelHoareMonitor&&) = default;
@@ -115,6 +117,7 @@ namespace jackbergus {
             bool isClosed;
             HoareMonitor<CONDITIONS_ENUM>* ref;
         public:
+
             CriticalSection(HoareMonitor<CONDITIONS_ENUM>* ref) : ref(ref), isClosed(false) {}
             CriticalSection(CriticalSection&&x) : ref{x.ref}, isClosed(x.isClosed) {
                 x.ref = nullptr;
