@@ -39,6 +39,10 @@ namespace jackbergus {
             HoareMonitor(): mutex(0, 1) {
 
             }
+            HoareMonitor(HoareMonitor&& monitor)  noexcept = default;
+            HoareMonitor& operator=(HoareMonitor&& monitor)  noexcept = default;
+            HoareMonitor(const HoareMonitor&) = delete; // Cannot copy a monitor!
+            HoareMonitor& operator=(const HoareMonitor&) = delete;
 
             bool mutex_in(int timeout) {
                 return mutex.P(timeout);
@@ -98,41 +102,58 @@ namespace jackbergus {
             HoareMonitor<CONDITIONS_ENUM> low_level_monitor;
 
         public:
+            HighLevelHoareMonitor() {}
+            HighLevelHoareMonitor(HighLevelHoareMonitor&&) = default;
+            HighLevelHoareMonitor& operator=(HighLevelHoareMonitor&&) = default;
+            HighLevelHoareMonitor(const HighLevelHoareMonitor&) = delete;
+            HighLevelHoareMonitor& operator=(const HighLevelHoareMonitor&) = delete;
             CriticalSection<CONDITIONS_ENUM> lock();
         };
 
         template<typename CONDITIONS_ENUM>
         class CriticalSection {
             bool isClosed;
-            HoareMonitor<CONDITIONS_ENUM>& ref;
+            HoareMonitor<CONDITIONS_ENUM>* ref;
         public:
-            CriticalSection(HoareMonitor<CONDITIONS_ENUM>& ref) : ref(ref), isClosed(false) {}
-
+            CriticalSection(HoareMonitor<CONDITIONS_ENUM>* ref) : ref(ref), isClosed(false) {}
+            CriticalSection(CriticalSection&&x) : ref{x.ref}, isClosed(x.isClosed) {
+                x.ref = nullptr;
+                x.isClosed = true;
+            }
+            CriticalSection& operator=(CriticalSection&& x) {
+                ref = x.ref;
+                isClosed = x.isClosed;
+                x.ref = nullptr;
+                x.isClosed = true;
+                return *this;
+            }
+            CriticalSection(const CriticalSection&) = delete;
+            CriticalSection& operator=(const CriticalSection&) = delete;
             ~CriticalSection() {
                 unlock();
             }
 
             bool waitCond(CONDITIONS_ENUM val, int timeout) {
-                if (isClosed) {
+                if (isClosed || (!ref)) {
                     return false;
                 } else {
-                    return ref.waitCond(val, timeout);
+                    return ref->waitCond(val, timeout);
                 }
             }
 
             bool signalCond(CONDITIONS_ENUM val, int timeout) {
-                if (isClosed) {
+                if (isClosed || (!ref)) {
                     return false;
                 } else {
-                    return ref.signalCond(val, timeout);
+                    return ref->signalCond(val, timeout);
                 }
             }
 
             bool unlock() {
-                if (isClosed) {
+                if (isClosed || (!ref)) {
                     return false;
                 } else {
-                    ref.mutex_out();
+                    ref->mutex_out();
                     isClosed = true;
                     return true;
                 }
@@ -140,8 +161,8 @@ namespace jackbergus {
         };
 
         template<typename CONDITIONS_ENUM>
-        CriticalSection<CONDITIONS_ENUM>&& HighLevelHoareMonitor<CONDITIONS_ENUM>::lock() {
-            return {low_level_monitor};
+        CriticalSection<CONDITIONS_ENUM> HighLevelHoareMonitor<CONDITIONS_ENUM>::lock() {
+            return {&low_level_monitor};
         }
     } // concurrency
 } // jackbergus

@@ -39,7 +39,7 @@ bool binary_to_csv_serializer(const std::string& folder,
     for (uint64_t i = 0; i < paths_to_yamls.size(); i++) {
         auto &ref = yamls_to_readers[i];
         auto &yaml = paths_to_yamls[i];
-        ref.init(yaml.filename(), time_arrow);
+        ref.init(yaml.filename().string(), time_arrow);
     }
 
     std::ofstream csv_file{file_name};
