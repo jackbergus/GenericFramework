@@ -20,10 +20,11 @@
 #define GENERALFRAMEWORK_HOAREMONITOR_H
 
 #include <magic_enum/magic_enum.hpp>
-// #include <cpp/Semaphore.h>
 #include <queue>
 #include <stack>
-
+extern "C" {
+#include "semLib.h"
+}
 #include <cpp/Semaphore.h>
 
 namespace jackbergus {
