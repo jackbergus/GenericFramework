@@ -30,8 +30,10 @@ namespace jackbergus {
 
                     {
                         // Doing a first read, and getting all the shared temporal indices....
-                        jackbergus::framework::FileBlockReader<> tmp_file(v["binary"].as_str());
+                        const auto& binary_file_name = v["binary"].as_str();
+                        jackbergus::framework::FileBlockReader<> tmp_file(binary_file_name);
                         uint64_t total = 0;
+                        framework::FileBlockWrapper<> tmp_buffer;
                         while (tmp_file.read(tmp_buffer)) {
                             total += tmp_buffer.size();
                             for (uint64_t i = 0, N = tmp_buffer.size(); i < N; ++i) {

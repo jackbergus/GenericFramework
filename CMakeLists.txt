@@ -82,5 +82,9 @@ add_executable(test_triple_buffer examples/test_triple_buffer.cpp)
 add_executable(test_thread_pool_with_scheduling examples/test_threadpoolsched.cpp)
 target_link_libraries(test_thread_pool_with_scheduling  vxworks cpp_vxworks)
 
-add_executable(example_EDF_sched examples/example_EDF_sched.cpp)
+add_executable(example_EDF_sched examples/example_EDF_sched.cpp
+        examples/admissible_nested_example.h)
 target_link_libraries(example_EDF_sched  vxworks cpp_vxworks GeneralFramework)
+
+add_executable(example_for_nested_record examples/example_for_nested_record.cpp)
+target_link_libraries(example_for_nested_record GeneralFramework)

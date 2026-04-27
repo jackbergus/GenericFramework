@@ -45,7 +45,6 @@ private:
     // bool is_good = true;
     std::vector<std::pair<uint64_t, uint64_t> > field_offsets;
     std::vector<bool> is_good;
-    framework::FileBlockWrapper<> tmp_buffer;
     std::vector<framework::FileBlockReader<> > file_wrappers;
     std::vector<jackbergus::framework::FileBlockWrapper<> > file_block_buffers;
     std::vector<std::string> field_names;

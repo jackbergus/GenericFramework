@@ -19,8 +19,8 @@
 #ifndef GENERALFRAMEWORK_CONTINUOUSMONITORING_H
 #define GENERALFRAMEWORK_CONTINUOUSMONITORING_H
 
-#include <jackbergus/framework/types/NativeTypes.h>
 #include <narcissus/lightweight_any.h>
+#include <jackbergus/framework/types/NativeTypes.h>
 
 #include <jackbergus/framework/monitor/AbstractVariableMonitor.h>
 

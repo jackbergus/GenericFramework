@@ -39,38 +39,66 @@ namespace jackbergus {
         template<typename T, int x, int to, uint64_t block_size = 1024>
 struct static_for {
             std::vector<AnyFundamentalVariableMonitoring<block_size>> expandWithBasicMonitor(jackbergus::framework::FinestScaleTimeRepresentation start_time, const std::string& base_path = "") {
-                auto result = static_for<T, x+1,to>().expandWithBasicMonitor(start_time);
+                std::vector<AnyFundamentalVariableMonitoring<block_size>> current;
                 auto view = std::string(refl::trait::get_t<x, refl::member_list<T>>::name.c_str());
                 using K = typename refl::trait::get_t<x, refl::member_list<T>>::value_type;
-                if (getTypeInformation<K>() == type_cases::T_CLASS) {
+                constexpr auto val = getTypeInformation<K>();
+                if constexpr (val == type_cases::T_CLASS) {
                     // if I am now dealing with a class, then consider recursively wrapping this into something else,
                     // and re-start the computation back again
-                    return  static_for<K, 0, refl::member_list<K>::size>{}.expandWithBasicMonitor(start_time, view+"/");
+                    current = static_for<K, 0, refl::member_list<K>::size>{}.expandWithBasicMonitor(start_time, base_path + view + ".");
+                } else if constexpr (val == type_cases::T_STATIC_ARRAY) {
+                   // If this is an array, then I need to consider whether the internal element is a fundamental type or not
+                   using H = typename std::remove_all_extents_t<K>;
+                   constexpr uint64_t N = sizeof(K)/sizeof(H);
+                   if constexpr (!std::is_fundamental_v<H>) {
+                       for (auto i = 0u; i < N; ++i) {
+                           auto local = static_for<H, 0, refl::member_list<H>::size>{}.expandWithBasicMonitor(start_time, base_path+view+"["+std::to_string(i)+"].");
+                           current.insert(current.end(), std::move_iterator(local.begin()), std::move_iterator(local.end()));
+                       }
+                   } else {
+                       for (auto i = 0u; i < N; ++i) {
+                           current.emplace_back(flatten_type_to_enum<H>(start_time, x, base_path+view+"["+std::to_string(i)+"]"));
+                       }
+                   }
                 } else {
                     // Otherwise, just return the element as it stands, forsooth!
-                    result.emplace_back(flatten_type_to_enum<K>(start_time, x, base_path+view));
+                    current.emplace_back(flatten_type_to_enum<K>(start_time, x, base_path+view));
                 }
-                return result;
+                auto result = static_for<T, x+1,to>().expandWithBasicMonitor(start_time, base_path);
+                current.insert(current.end(), std::move_iterator(result.begin()), std::move_iterator(result.end()));
+                return current;
             }
 
-            int64_t setRecursivelyWithTemplates(jackbergus::framework::FinestScaleTimeRepresentation start_time, const T& value, std::vector<jackbergus::framework::AnyFundamentalVariableMonitoring<block_size>>& f, int64_t acc = 0) {
+            uint64_t setRecursivelyWithTemplates(jackbergus::framework::FinestScaleTimeRepresentation start_time, const T& value, std::vector<jackbergus::framework::AnyFundamentalVariableMonitoring<block_size>>& f, uint64_t acc = 0) {
                 auto val = get_field_t<T, x>::get(value);
                 using K = typename refl::trait::get_t<x, refl::member_list<T>>::value_type;
-                if (getTypeInformation<K>() == type_cases::T_CLASS) {
+                constexpr auto t_val = getTypeInformation<K>();
+                if constexpr (t_val == type_cases::T_STATIC_ARRAY) {
+                    using H = typename std::remove_all_extents_t<K>;
+                    constexpr uint64_t N = sizeof(K)/sizeof(H);
+                    if constexpr (!std::is_fundamental_v<H>) {
+                        for (auto i = 0u; i<N; i++) {
+                            acc = static_for<H, 0, refl::member_list<H>::size>{}.setRecursivelyWithTemplates(start_time, val[i], f, acc);
+                        }
+                        return static_for<T, x+1,to>().setRecursivelyWithTemplates(start_time, value, f, acc);
+                    } else {
+                        for (auto i = 0u; i < N; ++i) {
+                            f[acc].updateValue(start_time, val[i]);
+                            acc++;
+                        }
+                        return static_for<T, x+1,to>().setRecursivelyWithTemplates(start_time, value, f, acc);
+                    }
+                } else if constexpr (t_val != type_cases::T_CLASS) {
                     // if this is merely a field, then doing the immediate update
-                    auto val_rec = static_for<T, x+1,to>().setRecursivelyWithTemplates(start_time, value, f, acc+1);
-                    return f[acc].updateValue(start_time, val) ? val_rec+1 : -1;
+                    f[acc].updateValue(start_time, val);
+                    return static_for<T, x+1,to>().setRecursivelyWithTemplates(start_time, value, f, acc+1);
                 } else {
                     // otherwise, I need to recursively analyse this by not updating the field directly, rather one of
                     // its constituents
-                    int64_t withInDepthRecursion = static_for<K, 0, refl::member_list<K>::size>{}.setRecursivelyWithTemplates(start_time, val, f, acc);
-                    if (withInDepthRecursion >= 0) {
-                        return static_for<T, x+1,to>().setRecursivelyWithTemplates(start_time, value, f, withInDepthRecursion);
-                    } else {
-                        return withInDepthRecursion;
-                    }
+                    auto withInDepthRecursion = static_for<K, 0, refl::member_list<K>::size>{}.setRecursivelyWithTemplates(start_time, val, f, acc);
+                    return static_for<T, x+1,to>().setRecursivelyWithTemplates(start_time, value, f, withInDepthRecursion);
                 }
-
             }
         };
 
@@ -80,14 +108,14 @@ struct static_for {
                 return {};
             }
 
-            int64_t setRecursivelyWithTemplates(jackbergus::framework::FinestScaleTimeRepresentation start_time, const T& value, std::vector<jackbergus::framework::AnyFundamentalVariableMonitoring<block_size>>& f, int64_t acc = 0) {
+            uint64_t setRecursivelyWithTemplates(jackbergus::framework::FinestScaleTimeRepresentation start_time, const T& value, std::vector<jackbergus::framework::AnyFundamentalVariableMonitoring<block_size>>& f, uint64_t acc = 0) {
                 return acc;
             }
         };
 
         template <typename  T, uint64_t block_size=1024> std::vector<jackbergus::framework::AnyFundamentalVariableMonitoring<block_size>> getNativeType(jackbergus::framework::FinestScaleTimeRepresentation start_time) {
             auto v = static_for<T, 0, refl::member_list<T>::size>{}.expandWithBasicMonitor(start_time, "");
-            std::reverse(v.begin(), v.end());
+            //std::reverse(v.begin(), v.end());
             return v;
         }
 
@@ -137,7 +165,8 @@ struct static_for {
 
             bool updateValue(jackbergus::framework::FinestScaleTimeRepresentation curr_t,
                              const T& value)  override {
-                return static_for<T, 0, refl::member_list<T>::size>{}.setRecursivelyWithTemplates(curr_t, value, fields, 0);
+                static_for<T, 0, refl::member_list<T>::size>{}.setRecursivelyWithTemplates(curr_t, value, fields, 0);
+                return true;
             }
 
             AnyStructMonitoring(jackbergus::framework::FinestScaleTimeRepresentation start_time) {

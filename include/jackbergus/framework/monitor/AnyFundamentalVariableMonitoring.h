@@ -242,8 +242,7 @@ template <uint64_t block_size = 1024>
 
 #include <magic_enum/magic_enum.hpp>
 
-template <typename T>  type_cases getTypeInformation() {
-    std::type_index type_i = std::type_index(typeid(T));
+template <typename T> constexpr type_cases getTypeInformation() {
     if constexpr (std::is_same_v<T, std::string>) {
         return type_cases::T_STRING;
     } else if constexpr (std::is_void_v<T>) {
