@@ -38,35 +38,55 @@ namespace jackbergus {
 
         template<typename T, int x, int to, uint64_t block_size = 1024>
 struct static_for {
-            std::vector<AnyFundamentalVariableMonitoring<block_size>> expandWithBasicMonitor(jackbergus::framework::FinestScaleTimeRepresentation start_time) {
+            std::vector<AnyFundamentalVariableMonitoring<block_size>> expandWithBasicMonitor(jackbergus::framework::FinestScaleTimeRepresentation start_time, const std::string& base_path = "") {
                 auto result = static_for<T, x+1,to>().expandWithBasicMonitor(start_time);
                 auto view = std::string(refl::trait::get_t<x, refl::member_list<T>>::name.c_str());
                 using K = typename refl::trait::get_t<x, refl::member_list<T>>::value_type;
-                result.emplace_back(flatten_type_to_enum<K>(start_time, x, view));
+                if (getTypeInformation<K>() == type_cases::T_CLASS) {
+                    // if I am now dealing with a class, then consider recursively wrapping this into something else,
+                    // and re-start the computation back again
+                    return  static_for<K, 0, refl::member_list<K>::size>{}.expandWithBasicMonitor(start_time, view+"/");
+                } else {
+                    // Otherwise, just return the element as it stands, forsooth!
+                    result.emplace_back(flatten_type_to_enum<K>(start_time, x, base_path+view));
+                }
                 return result;
             }
 
-            bool setRecursivelyWithTemplates(jackbergus::framework::FinestScaleTimeRepresentation start_time, const T& value, std::vector<jackbergus::framework::AnyFundamentalVariableMonitoring<block_size>>& f) {
-                auto val_rec = static_for<T, x+1,to>().setRecursivelyWithTemplates(start_time, value, f);
+            int64_t setRecursivelyWithTemplates(jackbergus::framework::FinestScaleTimeRepresentation start_time, const T& value, std::vector<jackbergus::framework::AnyFundamentalVariableMonitoring<block_size>>& f, int64_t acc = 0) {
                 auto val = get_field_t<T, x>::get(value);
-                // auto val = field_reflection::get_field<x>(value);
-                return f[x].updateValue(start_time, val) ? val_rec : false;
+                using K = typename refl::trait::get_t<x, refl::member_list<T>>::value_type;
+                if (getTypeInformation<K>() == type_cases::T_CLASS) {
+                    // if this is merely a field, then doing the immediate update
+                    auto val_rec = static_for<T, x+1,to>().setRecursivelyWithTemplates(start_time, value, f, acc+1);
+                    return f[acc].updateValue(start_time, val) ? val_rec+1 : -1;
+                } else {
+                    // otherwise, I need to recursively analyse this by not updating the field directly, rather one of
+                    // its constituents
+                    int64_t withInDepthRecursion = static_for<K, 0, refl::member_list<K>::size>{}.setRecursivelyWithTemplates(start_time, val, f, acc);
+                    if (withInDepthRecursion >= 0) {
+                        return static_for<T, x+1,to>().setRecursivelyWithTemplates(start_time, value, f, withInDepthRecursion);
+                    } else {
+                        return withInDepthRecursion;
+                    }
+                }
+
             }
         };
 
         template<typename T, int to, uint64_t block_size>
         struct static_for<T, to,to, block_size> {
-            std::vector<jackbergus::framework::AnyFundamentalVariableMonitoring<block_size>> expandWithBasicMonitor(jackbergus::framework::FinestScaleTimeRepresentation start_time) {
+            std::vector<jackbergus::framework::AnyFundamentalVariableMonitoring<block_size>> expandWithBasicMonitor(jackbergus::framework::FinestScaleTimeRepresentation start_time, const std::string& base_path = "") {
                 return {};
             }
 
-            bool setRecursivelyWithTemplates(jackbergus::framework::FinestScaleTimeRepresentation start_time, const T& value, std::vector<jackbergus::framework::AnyFundamentalVariableMonitoring<block_size>>& f) {
-                return true;
+            int64_t setRecursivelyWithTemplates(jackbergus::framework::FinestScaleTimeRepresentation start_time, const T& value, std::vector<jackbergus::framework::AnyFundamentalVariableMonitoring<block_size>>& f, int64_t acc = 0) {
+                return acc;
             }
         };
 
         template <typename  T, uint64_t block_size=1024> std::vector<jackbergus::framework::AnyFundamentalVariableMonitoring<block_size>> getNativeType(jackbergus::framework::FinestScaleTimeRepresentation start_time) {
-            auto v = static_for<T, 0, refl::member_list<T>::size>{}.expandWithBasicMonitor(start_time);
+            auto v = static_for<T, 0, refl::member_list<T>::size>{}.expandWithBasicMonitor(start_time, "");
             std::reverse(v.begin(), v.end());
             return v;
         }
@@ -117,7 +137,7 @@ struct static_for {
 
             bool updateValue(jackbergus::framework::FinestScaleTimeRepresentation curr_t,
                              const T& value)  override {
-                return static_for<T, 0, refl::member_list<T>::size>{}.setRecursivelyWithTemplates(curr_t, value, fields);
+                return static_for<T, 0, refl::member_list<T>::size>{}.setRecursivelyWithTemplates(curr_t, value, fields, 0);
             }
 
             AnyStructMonitoring(jackbergus::framework::FinestScaleTimeRepresentation start_time) {
