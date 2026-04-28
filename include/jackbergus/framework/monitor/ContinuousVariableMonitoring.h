@@ -219,6 +219,15 @@ namespace jackbergus {
                 }
                 return true;
             }
+
+            bool flush() {
+                if (file_serialized) {
+                    file_serialized->flush();
+                    return true;
+                } else {
+                    return false;
+                }
+            }
         };
     } // framework
 } // jackbergus

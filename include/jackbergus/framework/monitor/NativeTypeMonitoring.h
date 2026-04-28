@@ -46,6 +46,10 @@ namespace jackbergus {
 // #endif
             uint64_t record_offset, uint64_t sizeof_);
 
+            void flush(std::ofstream& file) {
+                file.flush();
+            }
+
             template <typename T> bool write(const T& value, std::ofstream& file) {
 // #if __cplusplus >= 202302L
                 if (std::type_index(typeid(T)) != type_i)

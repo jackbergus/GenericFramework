@@ -92,3 +92,5 @@ target_link_libraries(example_for_nested_record GeneralFramework)
 
 add_executable(udp1 examples/udp1.cpp)
 add_executable(udp2 examples/udp2.cpp)
+
+add_executable(new_struct_delta examples/new_struct_delta.cpp)
