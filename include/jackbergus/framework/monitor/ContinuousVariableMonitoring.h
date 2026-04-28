@@ -19,14 +19,14 @@
 #ifndef GENERALFRAMEWORK_CONTINUOUSVARIABLEMONITORING_H
 #define GENERALFRAMEWORK_CONTINUOUSVARIABLEMONITORING_H
 
+#include <fkYAML/node.hpp>
 #include <cstring>
 #include <vector>
 #include <jackbergus/framework/types/NativeTypes.h>
 #include <memory>
 
-#include <fkYAML/node.hpp>
 
-#include <jackbergus/framework/ndp//FileSerializer.h>
+#include <jackbergus/framework/ndp/FileSerializer.h>
 #include <jackbergus/framework/monitor/ContinuousMonitoring.h>
 
 namespace jackbergus {

@@ -19,6 +19,7 @@
 #ifndef GENERALFRAMEWORK_ANYSTRUCTMONITORING_H
 #define GENERALFRAMEWORK_ANYSTRUCTMONITORING_H
 
+#include <fkYAML/node.hpp>
 #include <cstdio>
 #include <algorithm>
 #include <cstdint>
@@ -29,9 +30,9 @@
 
 #include <jackbergus/framework/monitor/AnyFundamentalVariableMonitoring.h>
 
-#include "jackbergus/data/recursive_encoder.h"
+#include <jackbergus/data/recursive_encoder.h>
 
-#include <fkYAML/node.hpp>
+
 
 namespace jackbergus {
     namespace framework {

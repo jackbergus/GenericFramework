@@ -2,7 +2,7 @@
 // Created by Giacomo Bergami, PhD on 10/04/2026.
 //
 
-#include "jackbergus/concurrency/thread_pool/Task.h"
+#include <jackbergus/concurrency/thread_pool/Task.h>
 
 namespace jackbergus {
     namespace concurrency {
