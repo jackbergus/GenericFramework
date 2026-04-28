@@ -89,8 +89,11 @@ public:
     if (n==sizeof(result)) {
       bitset_.insert(result);
       return true;
-    } else
-    return false;
+
+    } else {
+      std::cout << strerror(errno) << std::endl;
+      return false;
+    }
   }
 
   std::vector<signal_type> getActiveSignals() {
@@ -110,7 +113,7 @@ public:
   void close() {
     // Close socket
     if (sockfd>=0) {
-      close(sockfd);
+      ::close(sockfd);
       sockfd = -1;
     }
   }

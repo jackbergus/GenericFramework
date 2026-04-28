@@ -19,11 +19,6 @@
 // Created by gyankos on 26/03/26.
 //
 
-#include <jackbergus/networking/udp/UDPClient.h>
-#include <jackbergus/networking/udp/UDPServer.h>
-
-#ifndef GENERALFRAMEWORK_UDP_H
-#define GENERALFRAMEWORK_UDP_H
 
 #if defined(__vxworks)
 #include "vxWorks.h"
@@ -46,6 +41,8 @@
 #include <errno.h>
 #endif
 
+#ifndef JACKBERGUS_UDP
+#define JACKBERGUS_UDP
 
 #define MAXLINE     (1024)
 #define SERVER_PORT (5004)
@@ -59,4 +56,4 @@ static inline int GetWSASocketError(int sockfd)
     return(ris);
 }
 
-#endif //GENERALFRAMEWORK_UDP_H
+#endif
