@@ -31,7 +31,7 @@ int main() {
     constexpr uint64_t MAX = 50;
 
     for (uint64_t idx = 0; idx < MAX; ++idx) {
-        bool randomBool = true; //static_cast<bool>(dist(gen));
+        bool randomBool = static_cast<bool>(dist(gen));
         auto randomNum = dista(gen);
 
         {
