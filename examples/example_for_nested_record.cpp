@@ -25,7 +25,7 @@ int main() {
           }
           memset(&final_n, 0, sizeof(final_n));
 
-          jackbergus::framework::AnyStructMonitoring<Final_N> mimicking_serialization(0, final_n);
+          jackbergus::framework::AnyStructMonitoring<Final_N> mimicking_serialization(0); // Starting at zero with an invalid value (mimicking external configurations, that are set only once they are known).
           mimicking_serialization.setFile("Final_N");
 
           // From now onwards, simulating some elements being changed
@@ -64,7 +64,7 @@ int main() {
                std::cout << ref.field_name() << std::endl;
           }
 
-          jackbergus::framework::AnyStructMonitoring<BogusConcurrentDataRecord> mimicking_serialization(0, concurrent);
+          jackbergus::framework::AnyStructMonitoring<BogusConcurrentDataRecord> mimicking_serialization(0, concurrent); // starting at zero with some valid zero values (mimicking the internal and non-external configurations)
           mimicking_serialization.setFile("concurrent");
 
           concurrent.val = 1; // valori dal tempo 1
@@ -76,8 +76,12 @@ int main() {
           concurrent.val = 3; // valori dal tempo 3
           mimicking_serialization.updateValue(3, concurrent);
 
+          mimicking_serialization.setInvalidValue(4);
+
           concurrent.timestamp = 4.0; // valori dal tempo 5
           mimicking_serialization.updateValue(5, concurrent);
+
+          mimicking_serialization.setInvalidValue(7);
 
           concurrent.val = 9; // valori dal tempo 9
           mimicking_serialization.updateValue(9, concurrent);

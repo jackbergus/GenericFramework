@@ -158,7 +158,8 @@ template <uint64_t block_size = 1024>
                 } else {
                     AnyVariableMonitoring s;
                     s.start_time = start_time;
-                    s.end_time_inclusive = end_time_inclusive;
+                    const auto prev = std::nextafter(curr_t, std::numeric_limits<FinestScaleTimeRepresentation>::lowest());
+                    s.end_time_inclusive = std::max(end_time_inclusive, prev);
                     s.value = current_value;
                     pushRecord(std::move(s));
                     start_time = end_time_inclusive = curr_t;
@@ -226,7 +227,8 @@ template <uint64_t block_size = 1024>
                     } else {
                         AnyVariableMonitoring s;
                         s.start_time = start_time;
-                        s.end_time_inclusive = end_time_inclusive;
+                        const auto prev = std::nextafter(curr_t, std::numeric_limits<FinestScaleTimeRepresentation>::lowest());
+                        s.end_time_inclusive = std::max(end_time_inclusive, prev);
                         s.value = current_value;
                         pushRecord(std::move(s));
                         start_time = end_time_inclusive = curr_t;
