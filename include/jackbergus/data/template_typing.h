@@ -17,7 +17,7 @@
 //  along with narcissus. If not, see <http://www.gnu.org/licenses/>.
 
 //
-// Created by gyankos on 27/12/25.
+// Created by Giacomo Bergami, PhD on 27/12/25.
 //
 
 #ifndef REFLECTION_TEMPLATE_TYPING_H

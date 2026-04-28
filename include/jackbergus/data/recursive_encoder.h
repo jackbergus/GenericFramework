@@ -19,11 +19,11 @@
 #ifndef FLOATMAX_RECURSIVE_ENCODER_H
 #define FLOATMAX_RECURSIVE_ENCODER_H
 
-#include "jackbergus/data/NetworkEnum.h"
-#include "jackbergus/data/NetworkFloat.h"
-#include "jackbergus/data/NetworkInt.h"
+#include <jackbergus/data/NetworkEnum.h>
+#include <jackbergus/data/NetworkFloat.h>
+#include <jackbergus/data/NetworkInt.h>
 #include "refl.hpp"
-#include "jackbergus/data/template_typing.h"
+#include <jackbergus/data/template_typing.h>
 #include <functional>
 
 template<typename T, uint64_t idx>

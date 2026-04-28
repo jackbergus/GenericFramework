@@ -55,7 +55,7 @@ public:
             running = true;
             t = std::thread([&]() {
                 while (true) {
-                    auto lock = gm.lock();
+                    auto lock = std::move(gm.lock());
                     // gm.mutex_in(-1);
                     // std::unique_lock mutex{lock};
                     if (q.empty()) {
@@ -80,7 +80,7 @@ public:
             return false;
         } else {
             {
-                auto lock = gm.lock();
+                auto lock =std::move(gm.lock());
                 // std::unique_lock<std::mutex> mutex{lock};
                 q.push(Task{test});
             }
@@ -93,11 +93,11 @@ public:
              return false;
          }  else if (!terminated) {
              {
-                 auto lock = gm.lock();
+                 jackbergus::concurrency::CriticalSection<SchedulerCond> lock(std::move(gm.lock()));
                  // std::unique_lock mutex{lock};
                  terminated = true;
-                 gm.signalCond(SchedulerCond::QueueNotEmpty, -1);
-                 gm.mutex_out();
+                 lock.signalCond(SchedulerCond::QueueNotEmpty, -1);
+                 //lock.unlock();
              }
              // cv.notify_one(); // The semantics in C++ is different from java: the notification shall occur outside the
              // mutex, as this does not behave like Hoare's monitor, and just sends a signal to the thread, but does

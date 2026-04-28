@@ -2,14 +2,72 @@
 // Created by gyankos on 26/03/26.
 //
 
-#include "jackbergus/framework/monitor//serializer/binary_to_csv_serializer.h"
+#include <fkYAML/node.hpp>
+#include <jackbergus/framework/monitor/serializer/binary_to_csv_serializer.h>
 
 #include <filesystem>
 #include <set>
 #include <vector>
+#include <sys/unistd.h>
 
-#include "jackbergus/framework/monitor//deserializer/RecordFileDeserializer.h"
-#include "jackbergus/framework/types/NativeTypes.h"
+#include <jackbergus/framework/monitor/deserializer/RecordFileDeserializer.h>
+#include <jackbergus/framework/types/NativeTypes.h>
+
+
+bool clearYamlWithBinaries(const std::string& file_name) {
+    if (std::filesystem::is_directory(file_name) || (!std::filesystem::is_regular_file(file_name)))
+        return false;
+    bool result = true;
+    {
+        std::ifstream f{file_name};
+        auto node = fkyaml::node::deserialize(f);
+        const auto &struct_name = node["name"];
+        auto &m = node["fields"].as_map();
+        // file_wrappers.resize(m.size());
+        // file_block_buffers.resize(m.size());
+        // field_names.resize(m.size());
+        // is_good.resize(m.size());
+        // field_offsets.resize(m.size());
+        uint64_t i = 0;
+        for (auto &[k, v]: node["fields"].as_map()) {
+            const auto &field_name = k.as_str();
+
+            {
+                // Doing a first read, and getting all the shared temporal indices....
+                const auto& binary_file_name = v["binary"].as_str();
+                if (std::filesystem::is_regular_file(binary_file_name)) {
+                    if (unlink(binary_file_name.c_str()) == -1) {
+                        result = false;
+                    }
+                } else {
+                    result = false;
+                }
+            }
+        }
+    }
+    if (unlink(file_name.c_str()) == -1)
+        result = false;
+    return result;
+}
+
+bool clearFolderWithYamls(const std::string& folder) {
+    if (!std::filesystem::is_directory(folder))
+        return false;
+    bool result = true;
+    for (const auto &ref: std::filesystem::directory_iterator(
+             folder)) {
+        if (ref.is_regular_file()) {
+            // mimicking C++20 endswith
+            auto str = ref.path().string();
+            if (str.substr(str.size() - 5, 5) == ".yaml") {
+                if (!clearYamlWithBinaries(str)) {
+                    result= false;
+                }
+            }
+        }
+             }
+    return result;
+}
 
 bool binary_to_csv_serializer(const std::string& folder,
                               const std::string& file_name) {
@@ -35,28 +93,47 @@ bool binary_to_csv_serializer(const std::string& folder,
 
     std::set<jackbergus::framework::FinestScaleTimeRepresentation> time_arrow;
     std::vector<jackbergus::data::deserializer::RecordFileDeserializer> yamls_to_readers;
+    std::vector<std::pair<jackbergus::framework::BlockHeader*, jackbergus::framework::BlockHeader*>> position_vector;
     yamls_to_readers.resize(paths_to_yamls.size());
+
     for (uint64_t i = 0; i < paths_to_yamls.size(); i++) {
         auto &ref = yamls_to_readers[i];
         auto &yaml = paths_to_yamls[i];
-        ref.init(yaml.filename(), time_arrow);
+        ref.init(yaml.filename().string(), time_arrow);
     }
 
     std::ofstream csv_file{file_name};
+    uint64_t colN = 0;
     for (const auto &ref: yamls_to_readers) {
         for (const auto &col_name: ref.columns()) {
+            colN++;
             csv_file << "\"" << col_name << "\",";
+            position_vector.emplace_back(nullptr, nullptr);
         }
     }
     csv_file << "\"time\"" << std::endl;
-
+    std::vector<std::string> previous_string_values(colN, "n/a");
+    std::stringstream ss;
+    ss.precision(64);
+    csv_file.precision(64);
+    const auto N = yamls_to_readers.size();
     for (const auto &time_step: time_arrow) {
-        for (auto &ref: yamls_to_readers) {
+        uint64_t colID = 0;
+        for (auto& ref : yamls_to_readers) {
             for (uint64_t i = 0, N = ref.n_variables(); i < N; i++) {
+                std::string& previous_string_value = previous_string_values[colID];
+                auto prev_curr = position_vector[colID];
                 auto cp = ref.current(i);
-                if ((!cp.first) || (!cp.second) || (cp.first->start_validity == 0) || (cp.first->end_validity == 0) || (
-                        cp.first->start > time_step)) {
-                    csv_file << "n/a,";
+                if (prev_curr.first == nullptr) {
+                    prev_curr.first = cp.first;
+                }
+
+                if ((!cp.first) || (!cp.second) || (cp.first->start_validity == 0) || (cp.first->end_validity == 0) || (prev_curr.second && prev_curr.second->end != prev_curr.first->start && (prev_curr.second->end < time_step) && (time_step < prev_curr.first->start))) {
+                    previous_string_value = "n/a";
+                    csv_file << previous_string_value << ",";
+                } else if ((cp.first->start > time_step)) {
+                    // Keeping the previous value
+                    csv_file << previous_string_value << ",";
                 } else {
                     bool performed_next = false;
                     if (time_step > cp.first->end) {
@@ -64,22 +141,32 @@ bool binary_to_csv_serializer(const std::string& folder,
                         performed_next = true;
                     }
                     cp = ref.current(i);
-                    if ((!cp.first) || (!cp.second) || (cp.first->start_validity == 0) || (cp.first->end_validity == 0)
-                        || (cp.first->start > time_step)) {
-                        csv_file << "n/a,";
-                    } else {
+                    prev_curr.second = prev_curr.first;
+                    prev_curr.first = cp.first;
+                    if ((!cp.first) || (!cp.second) || (cp.first->start_validity == 0) || (cp.first->end_validity == 0) || (prev_curr.second && prev_curr.second->end != prev_curr.first->start && (prev_curr.second->end < time_step) && (time_step < prev_curr.first->start))
+                        ) {
+                        previous_string_value = "n/a";
+                        csv_file << previous_string_value << ",";
+                    } else if ((cp.first->start > time_step)) {
+                        csv_file << previous_string_value << ",";
+                    }
+                    else {
                         if ((cp.first->start <= time_step) && (time_step <= cp.first->end)) {
                             const auto &info = ref.getFieldInfo(i);
                             switch (info->field_type) {
                                 case T_SIGNED_INTEGRAL:
                                     if (info->field_value_size == 8) {
-                                        csv_file << *(int64_t *) cp.second << ",";
+                                        previous_string_value = std::to_string(*(int64_t *) cp.second);
+                                        csv_file << previous_string_value << ",";
                                     } else if (info->field_value_size == 4) {
-                                        csv_file << *(int32_t *) cp.second << ",";
+                                        previous_string_value = std::to_string(*(int32_t *) cp.second);
+                                        csv_file << previous_string_value << ",";
                                     } else if (info->field_value_size == 2) {
-                                        csv_file << *(int16_t *) cp.second << ",";
+                                        previous_string_value = std::to_string(*(int16_t *) cp.second);
+                                        csv_file << previous_string_value << ",";
                                     } else if (info->field_value_size == 1) {
-                                        csv_file << *(int8_t *) cp.second << ",";
+                                        previous_string_value = std::to_string(static_cast<int>(*(int8_t *) cp.second));
+                                        csv_file << previous_string_value << ",";
                                     } else {
                                         throw std::runtime_error("Invalid value size for signed integral");
                                     }
@@ -87,13 +174,17 @@ bool binary_to_csv_serializer(const std::string& folder,
 
                                 case T_U_INTEGRAL:
                                     if (info->field_value_size == 8) {
-                                        csv_file << *(uint64_t *) cp.second << ",";
+                                        previous_string_value = std::to_string(*(uint64_t *) cp.second);
+                                        csv_file << previous_string_value << ",";
                                     } else if (info->field_value_size == 4) {
-                                        csv_file << *(uint32_t *) cp.second << ",";
+                                        previous_string_value = std::to_string(*(uint32_t *) cp.second);
+                                        csv_file << previous_string_value << ",";
                                     } else if (info->field_value_size == 2) {
-                                        csv_file << *(uint16_t *) cp.second << ",";
+                                        previous_string_value = std::to_string(*(uint16_t *) cp.second);
+                                        csv_file << previous_string_value << ",";
                                     } else if (info->field_value_size == 1) {
-                                        csv_file << *(uint8_t *) cp.second << ",";
+                                        previous_string_value = std::to_string(static_cast<int>(*(uint8_t *) cp.second));
+                                        csv_file << previous_string_value << ",";
                                     } else {
                                         throw std::runtime_error("Invalid value size for unsigned integral");
                                     }
@@ -101,17 +192,25 @@ bool binary_to_csv_serializer(const std::string& folder,
 
                                 case T_SIGNED_FLOAT:
                                     if (info->field_value_size == 8) {
-                                        csv_file << *(double *) cp.second << ",";
+                                        ss.str(std::string());
+                                        ss << *(double *) cp.second;
+                                        previous_string_value = ss.str();
+                                        csv_file << previous_string_value << ",";
                                     } else if (info->field_value_size == 4) {
-                                        csv_file << *(float *) cp.second << ",";
+                                        ss.str(std::string());
+                                        ss << *(double *) cp.second;
+                                        previous_string_value = ss.str();
+                                        csv_file << previous_string_value << ",";
                                     } else {
                                         throw std::runtime_error("Invalid value size for signed float");
                                     }
                                     break;
 
                                 case T_STRING: {
-                                    csv_file << std::quoted(std::string((char *) cp.second, cp.first->payload_size)) <<
-                                            ",";
+                                    ss.str(std::string());
+                                    ss << std::quoted(std::string((char *) cp.second, cp.first->payload_size));
+                                    previous_string_value = ss.str();
+                                    csv_file << previous_string_value <<  ",";
                                     break;
                                 }
 
@@ -133,6 +232,7 @@ bool binary_to_csv_serializer(const std::string& folder,
                         }
                     }
                 }
+                colID++;
             }
         }
         csv_file << time_step << std::endl;

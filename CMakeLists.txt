@@ -54,7 +54,12 @@ add_library(GeneralFramework STATIC examples/example_record_serialization.cpp
         src/jackbergus/monitor/deserializer/FieldGetting.cpp
         src/jackbergus/monitor/deserializer/RecordFileDeserializer.cpp
         src/jackbergus/monitor/serializer/binary_to_csv_serializer.cpp
+        src/jackbergus/concurrency/thread_pool/Task.cpp
+        include/jackbergus/concurrency/thread_pool/Task.h
+        src/jackbergus/concurrency/thread_pool/EDF.cpp
+        include/jackbergus/concurrency/thread_pool/EDF.h
 )
+target_link_libraries(GeneralFramework vxworks cpp_vxworks )
 
 
 add_executable(main examples/example_record_serialization.cpp)
@@ -76,3 +81,16 @@ add_executable(test_triple_buffer examples/test_triple_buffer.cpp)
 
 add_executable(test_thread_pool_with_scheduling examples/test_threadpoolsched.cpp)
 target_link_libraries(test_thread_pool_with_scheduling  vxworks cpp_vxworks)
+
+add_executable(example_EDF_sched examples/example_EDF_sched.cpp
+        examples/admissible_nested_example.h
+        include/jackbergus/networking/udp/UDPBiDirectional.h)
+target_link_libraries(example_EDF_sched  vxworks cpp_vxworks GeneralFramework)
+
+add_executable(example_for_nested_record examples/example_for_nested_record.cpp)
+target_link_libraries(example_for_nested_record GeneralFramework)
+
+add_executable(udp1 examples/udp1.cpp)
+add_executable(udp2 examples/udp2.cpp)
+
+add_executable(new_struct_delta examples/new_struct_delta.cpp)

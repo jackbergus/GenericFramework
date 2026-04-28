@@ -19,8 +19,8 @@
 #ifndef GENERALFRAMEWORK_CONTINUOUSMONITORING_H
 #define GENERALFRAMEWORK_CONTINUOUSMONITORING_H
 
-#include <jackbergus/framework/types/NativeTypes.h>
 #include <narcissus/lightweight_any.h>
+#include <jackbergus/framework/types/NativeTypes.h>
 
 #include <jackbergus/framework/monitor/AbstractVariableMonitor.h>
 
@@ -45,7 +45,7 @@ start_time = x.start_time;
                 end_time_inclusive = x.end_time_inclusive;
                 value = x.value;
                 return *this;}
-        } __attribute__((__packed__));
+        };
 
         using AnyVariableMonitoring = jackbergus::framework::VariableMonitoring<lightweight_any>;
 

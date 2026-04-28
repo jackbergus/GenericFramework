@@ -16,7 +16,7 @@
 //  You should have received a copy of the GNU General Public License
 //  along with GeneralFramework. If not, see <http://www.gnu.org/licenses/>.
 
-#include "../../../include/jackbergus/concurrency/ThreadPool.h"
+#include <jackbergus/concurrency/ThreadPool.h>
 
 namespace jackbergus {
     namespace concurrency {

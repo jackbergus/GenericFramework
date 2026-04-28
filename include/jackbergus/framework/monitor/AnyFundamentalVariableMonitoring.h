@@ -158,7 +158,8 @@ template <uint64_t block_size = 1024>
                 } else {
                     AnyVariableMonitoring s;
                     s.start_time = start_time;
-                    s.end_time_inclusive = end_time_inclusive;
+                    const auto prev = std::nextafter(curr_t, std::numeric_limits<FinestScaleTimeRepresentation>::lowest());
+                    s.end_time_inclusive = std::max(end_time_inclusive, prev);
                     s.value = current_value;
                     pushRecord(std::move(s));
                     start_time = end_time_inclusive = curr_t;
@@ -226,7 +227,8 @@ template <uint64_t block_size = 1024>
                     } else {
                         AnyVariableMonitoring s;
                         s.start_time = start_time;
-                        s.end_time_inclusive = end_time_inclusive;
+                        const auto prev = std::nextafter(curr_t, std::numeric_limits<FinestScaleTimeRepresentation>::lowest());
+                        s.end_time_inclusive = std::max(end_time_inclusive, prev);
                         s.value = current_value;
                         pushRecord(std::move(s));
                         start_time = end_time_inclusive = curr_t;
@@ -241,6 +243,50 @@ template <uint64_t block_size = 1024>
 } // jackbergus
 
 #include <magic_enum/magic_enum.hpp>
+
+template <typename T> constexpr type_cases getTypeInformation() {
+    if constexpr (std::is_same_v<T, std::string>) {
+        return type_cases::T_STRING;
+    } else if constexpr (std::is_void_v<T>) {
+        return type_cases::T_VOID;
+    }if constexpr (std::is_null_pointer_v<T>) {
+        return type_cases::T_NULLPTR;
+    } else if constexpr (std::is_integral_v<T>) {
+        if constexpr (std::is_signed_v<T>) {
+            return type_cases::T_SIGNED_INTEGRAL;
+        } else {
+            return type_cases::T_U_INTEGRAL;
+        }
+    } else if constexpr (std::is_floating_point_v<T>) {
+        if constexpr (std::is_signed_v<T>) {
+            return type_cases::T_SIGNED_FLOAT;
+        } else {
+            return type_cases::T_U_FLOAT;
+        }
+    } else if constexpr (is_std_array<T>::value || std::is_array_v<T>) {
+        return type_cases::T_STATIC_ARRAY;
+    } else if constexpr (is_vector<T>::value) {
+        return type_cases::T_OTHER_ARRAY;
+    } else if constexpr  (is_list<T>::value) {
+        return type_cases::T_OTHER_ARRAY;
+    }  else if constexpr (std::is_enum_v<T>) {
+        return type_cases::T_ENUM;
+    } else if constexpr (is_tuple<T>::value) {
+        return type_cases::T_TUPLE;
+    } else if constexpr (std::is_union_v<T>) {
+        return type_cases::T_UNION;
+    } else if constexpr (is_smart_pointer<T>::value || is_actual_pointer<T>::value) {
+        return type_cases::T_POINTER;
+    } else if constexpr (is_variant<T>::value) {
+        return type_cases::T_VARIANT;
+    } else if constexpr (std::is_function_v<T>) {
+        return type_cases::T_FUNCTION;
+    } else if constexpr (std::is_class_v<T>) {
+        return type_cases::T_CLASS;
+    } else {
+        return type_cases::T_UNEXPECTED;
+    }
+}
 
 template <typename T, uint64_t block_size = 1024>
 jackbergus::framework::AnyFundamentalVariableMonitoring<block_size> flatten_type_to_enum(jackbergus::framework::FinestScaleTimeRepresentation start_time, uint64_t val, const std::string& name) {
@@ -313,7 +359,7 @@ jackbergus::framework::AnyFundamentalVariableMonitoring<block_size> flatten_type
         static_assert(false, "pointers are not supported: please consider flattening the type");
     }
     else if constexpr (std::is_class_v<T>) {
-        static_assert(false, "unions are not supported: please consider flattening the type");
+        static_assert(false, "classes are not supported: please consider flattening the type");
     } else {
         static_assert(false, "unsupported unknown type case");
     }
