@@ -2,14 +2,72 @@
 // Created by gyankos on 26/03/26.
 //
 
+#include "fkYAML/node.hpp"
 #include "jackbergus/framework/monitor//serializer/binary_to_csv_serializer.h"
 
 #include <filesystem>
 #include <set>
 #include <vector>
+#include <sys/unistd.h>
 
 #include "jackbergus/framework/monitor//deserializer/RecordFileDeserializer.h"
 #include "jackbergus/framework/types/NativeTypes.h"
+
+
+bool clearYamlWithBinaries(const std::string& file_name) {
+    if (std::filesystem::is_directory(file_name) || (!std::filesystem::is_regular_file(file_name)))
+        return false;
+    bool result = true;
+    {
+        std::ifstream f{file_name};
+        auto node = fkyaml::node::deserialize(f);
+        const auto &struct_name = node["name"];
+        auto &m = node["fields"].as_map();
+        // file_wrappers.resize(m.size());
+        // file_block_buffers.resize(m.size());
+        // field_names.resize(m.size());
+        // is_good.resize(m.size());
+        // field_offsets.resize(m.size());
+        uint64_t i = 0;
+        for (auto &[k, v]: node["fields"].as_map()) {
+            const auto &field_name = k.as_str();
+
+            {
+                // Doing a first read, and getting all the shared temporal indices....
+                const auto& binary_file_name = v["binary"].as_str();
+                if (std::filesystem::is_regular_file(binary_file_name)) {
+                    if (unlink(binary_file_name.c_str()) == -1) {
+                        result = false;
+                    }
+                } else {
+                    result = false;
+                }
+            }
+        }
+    }
+    if (unlink(file_name.c_str()) == -1)
+        result = false;
+    return result;
+}
+
+bool clearFolderWithYamls(const std::string& folder) {
+    if (!std::filesystem::is_directory(folder))
+        return false;
+    bool result = true;
+    for (const auto &ref: std::filesystem::directory_iterator(
+             folder)) {
+        if (ref.is_regular_file()) {
+            // mimicking C++20 endswith
+            auto str = ref.path().string();
+            if (str.substr(str.size() - 5, 5) == ".yaml") {
+                if (!clearYamlWithBinaries(str)) {
+                    result= false;
+                }
+            }
+        }
+             }
+    return result;
+}
 
 bool binary_to_csv_serializer(const std::string& folder,
                               const std::string& file_name) {

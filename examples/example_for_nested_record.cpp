@@ -89,4 +89,5 @@ int main() {
      }
 
      binary_to_csv_serializer("C:\\Users\\diste\\Downloads\\GenericFramework2\\cmake-build-debug", "final_flattened_csv_file.csv");
+     clearFolderWithYamls("C:\\Users\\diste\\Downloads\\GenericFramework2\\cmake-build-debug");
 }

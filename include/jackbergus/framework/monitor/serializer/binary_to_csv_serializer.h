@@ -17,4 +17,20 @@
 bool binary_to_csv_serializer(const std::string& folder,
                               const std::string& dst_csv_file);
 
+/**
+ * This command delets the yaml file containing the information pointed by the previously stored data, as well as the binaries that are associated with it
+ *
+ * @param file_name Yaml file to be removed, alongside with its serialized binary files
+ * @return True if the yaml file and the binaries pointed by it exists and the deletion of both type of files was successful as a whole, and false otherwise
+ */
+bool clearYamlWithBinaries(const std::string& file_name);
+
+/**
+ * This command deletes all the yaml files for binary storage and indexing that are stored within a current folder.
+ *
+ * @param folder Folder where to remove all the yaml files stored in it, without crawling within the subfolders.
+ * @return True if all the yaml files being stored are corrected deleted according to clearYamlWithBinaries, and false otherwise
+ */
+bool clearFolderWithYamls(const std::string& folder);
+
 #endif //GENERALFRAMEWORK_BINARY_TO_CSV_SERIALIZER_H
