@@ -24,7 +24,7 @@
 #include <queue>
 #include <stack>
 
-#include "../../../submodules/vxworks_linux/include/cpp/Semaphore.h"
+#include <cpp/Semaphore.h>
 
 namespace jackbergus {
     namespace concurrency {
@@ -67,7 +67,7 @@ namespace jackbergus {
             bool signalCond(CONDITIONS_ENUM val, int timeout) {
                 auto idx = static_cast<uint64_t>(val);
                 if (!waiting[idx].empty()) {
-                    auto ws = waiting[idx].top();
+                    auto ws = waiting[idx].front();
                     auto s = new Semaphore(0, 0);
                     urgent.push(s);
                     auto result = ws->V();
@@ -89,6 +89,60 @@ namespace jackbergus {
                 }
             }
         };
+
+        template<typename CONDITIONS_ENUM>
+        class CriticalSection;
+
+        template<typename CONDITIONS_ENUM>
+        class HighLevelHoareMonitor {
+            HoareMonitor<CONDITIONS_ENUM> low_level_monitor;
+
+        public:
+            CriticalSection<CONDITIONS_ENUM> lock();
+        };
+
+        template<typename CONDITIONS_ENUM>
+        class CriticalSection {
+            bool isClosed;
+            HoareMonitor<CONDITIONS_ENUM>& ref;
+        public:
+            CriticalSection(HoareMonitor<CONDITIONS_ENUM>& ref) : ref(ref), isClosed(false) {}
+
+            ~CriticalSection() {
+                unlock();
+            }
+
+            bool waitCond(CONDITIONS_ENUM val, int timeout) {
+                if (isClosed) {
+                    return false;
+                } else {
+                    return ref.waitCond(val, timeout);
+                }
+            }
+
+            bool signalCond(CONDITIONS_ENUM val, int timeout) {
+                if (isClosed) {
+                    return false;
+                } else {
+                    return ref.signalCond(val, timeout);
+                }
+            }
+
+            bool unlock() {
+                if (isClosed) {
+                    return false;
+                } else {
+                    ref.mutex_out();
+                    isClosed = true;
+                    return true;
+                }
+            }
+        };
+
+        template<typename CONDITIONS_ENUM>
+        CriticalSection<CONDITIONS_ENUM>&& HighLevelHoareMonitor<CONDITIONS_ENUM>::lock() {
+            return {low_level_monitor};
+        }
     } // concurrency
 } // jackbergus
 

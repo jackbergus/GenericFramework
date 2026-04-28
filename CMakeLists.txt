@@ -17,6 +17,7 @@ include_directories(submodules/fkYAML/include)
 include_directories(submodules/refl-cpp/include)
 include_directories(submodules/magic_enum/include)
 include_directories(submodules/narcissus/include)
+include_directories(submodules/vxworks_linux/include)
 #include_directories(submodules/narcissus/submodule/field-reflection/include)
 #include_directories(submodules/narcissus/submodule/magic_enum/include)
 
@@ -68,4 +69,10 @@ target_link_libraries(example_for_record_updates GeneralFramework)
 
 add_executable(example_record_serialization examples/example_record_serialization.cpp)
 target_link_libraries(example_record_serialization GeneralFramework)
+
 add_executable(signal_example examples/signal_example.cpp)
+
+add_executable(test_triple_buffer examples/test_triple_buffer.cpp)
+
+add_executable(test_thread_pool_with_scheduling examples/test_threadpoolsched.cpp)
+target_link_libraries(test_thread_pool_with_scheduling  vxworks cpp_vxworks)
