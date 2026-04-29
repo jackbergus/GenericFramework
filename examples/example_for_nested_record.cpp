@@ -7,23 +7,18 @@
 #include "jackbergus/framework/monitor/AnyStructMonitoring.h"
 #include "jackbergus/framework/monitor/serializer/binary_to_csv_serializer.h"
 
-struct BogusConcurrentDataRecord {
-     uint64_t val;
-     double   timestamp;
-};
-
-REFL_AUTO(type(BogusConcurrentDataRecord), field(val), field(timestamp))
 
 int main() {
      {
           Final_N final_n;
+          memset(&final_n, 0, sizeof(final_n));
           auto rs = jackbergus::framework::getNativeType<Final_N>(0);
           std::cout << "Final_N: " << std::endl;
           std::cout << "=========" << std::endl;
           for (const auto& ref : rs) {
                std::cout << ref.field_name() << std::endl;
           }
-          memset(&final_n, 0, sizeof(final_n));
+
 
           jackbergus::framework::AnyStructMonitoring<Final_N> mimicking_serialization(0); // Starting at zero with an invalid value (mimicking external configurations, that are set only once they are known).
           mimicking_serialization.setFile("Final_N");

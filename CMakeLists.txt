@@ -94,3 +94,4 @@ add_executable(udp1 examples/udp1.cpp)
 add_executable(udp2 examples/udp2.cpp)
 
 add_executable(new_struct_delta examples/new_struct_delta.cpp)
+target_link_libraries(new_struct_delta GeneralFramework)

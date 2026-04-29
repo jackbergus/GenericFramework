@@ -19,6 +19,7 @@
 #ifndef GENERALFRAMEWORK_ANYFUNDAMENTALVARIABLEMONITORING_H
 #define GENERALFRAMEWORK_ANYFUNDAMENTALVARIABLEMONITORING_H
 
+#include <cmath>
 #include <cstdint>
 #include <jackbergus/framework/monitor/ContinuousMonitoring.h>
 #include <jackbergus/framework/monitor/NativeTypeMonitoring.h>

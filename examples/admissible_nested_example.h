@@ -80,4 +80,12 @@ REFL_AUTO(type(Element1_L), field(val), field(jes), field(cho), field(voi_))
 REFL_AUTO(type(Element2_L), field(cho), field(voi_), field(val))
 REFL_AUTO(type(Final_L), field(first), field(second), field(third), field(objectivo))
 
+struct BogusConcurrentDataRecord {
+    uint64_t val;
+    double   timestamp;
+};
+
+REFL_AUTO(type(BogusConcurrentDataRecord), field(val), field(timestamp))
+
+
 #endif //GENERALFRAMEWORK_ADMISSIBLE_NESTED_EXAMPLE_H
