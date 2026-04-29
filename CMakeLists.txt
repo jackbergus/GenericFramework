@@ -53,11 +53,13 @@ add_library(GeneralFramework STATIC examples/example_record_serialization.cpp
         src/jackbergus/data/FltForTemplateParam.cpp
         src/jackbergus/monitor/deserializer/FieldGetting.cpp
         src/jackbergus/monitor/deserializer/RecordFileDeserializer.cpp
-        src/jackbergus/monitor/serializer/binary_to_csv_serializer.cpp
+        src/jackbergus/monitor/serializer/multibinary_to_csv_serializer.cpp
         src/jackbergus/concurrency/thread_pool/Task.cpp
         include/jackbergus/concurrency/thread_pool/Task.h
         src/jackbergus/concurrency/thread_pool/EDF.cpp
         include/jackbergus/concurrency/thread_pool/EDF.h
+        include/jackbergus/framework/monitor/serializer/binary_to_csv_serializer.h
+        src/jackbergus/monitor/serializer/binary_to_csv_serializer.cpp
 )
 target_link_libraries(GeneralFramework vxworks cpp_vxworks )
 

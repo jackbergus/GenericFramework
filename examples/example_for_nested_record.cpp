@@ -1,11 +1,11 @@
 //
-// Created by mbda on 27/04/2026.
+// Created by Giacomo Bergami, PhD on 27/04/2026.
 //
 
 #include <narcissus/lightweight_any.h>
 #include "admissible_nested_example.h"
 #include "jackbergus/framework/monitor/AnyStructMonitoring.h"
-#include "jackbergus/framework/monitor/serializer/binary_to_csv_serializer.h"
+#include "jackbergus/framework/monitor/serializer/multibinary_to_csv_serializer.h"
 
 
 int main() {
@@ -83,6 +83,6 @@ int main() {
           mimicking_serialization.clearFile();
      }
 
-     binary_to_csv_serializer("C:\\Users\\diste\\Downloads\\GenericFramework2\\cmake-build-debug", "final_flattened_csv_file.csv");
-     clearFolderWithYamls("C:\\Users\\diste\\Downloads\\GenericFramework2\\cmake-build-debug");
+     multibinary_to_csv_serializer("C:\\Users\\diste\\Downloads\\GenericFramework2\\cmake-build-debug", "final_flattened_csv_file.csv");
+     clearMultibinaryFolderWithYamls("C:\\Users\\diste\\Downloads\\GenericFramework2\\cmake-build-debug");
 }
