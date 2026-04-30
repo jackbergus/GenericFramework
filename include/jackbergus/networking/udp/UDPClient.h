@@ -23,6 +23,9 @@
 #define GENERALFRAMEWORK_UDPCLIENT_H
 
 #include <jackbergus/networking/udp/udp.h>
+#include <string>
+#include <iostream>
+#include <vector>
 
 template
 <typename signal_type>
@@ -51,7 +54,7 @@ public:
     }
 
     bool send_signal(const signal_type& signal) {
-        auto val= (sendto(sockfd, (const void*)&signal, sizeof(signal_type), 0,
+        auto val= (sendto(sockfd, (const char*)&signal, sizeof(signal_type), 0,
                (const struct sockaddr *)&servaddr, sizeof(servaddr)) == sizeof(signal_type));
         if (!val) {
             std::cout << strerror(errno) << std::endl;
@@ -62,7 +65,11 @@ public:
     void close() {
         // Close socket
         if (sockfd>=0) {
+#if defined(WIN32)||defined(WIN64)
+            closesocket(sockfd);
+#else
             ::close(sockfd);
+#endif
             sockfd = -1;
         }
     }

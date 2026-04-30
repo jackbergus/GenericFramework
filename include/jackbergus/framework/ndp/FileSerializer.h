@@ -27,7 +27,7 @@
 #include <jackbergus/framework/types/NativeTypes.h>
 
 #include <magic_enum/magic_enum.hpp>
-
+#include <jackbergus/data/packed.h>
 namespace jackbergus {
     namespace framework {
         struct new_delta_data_structure {
@@ -51,14 +51,14 @@ namespace jackbergus {
         };
         static_assert(sizeof(new_delta_data_structure) == sizeof(uint64_t)*3);
 
-        struct BlockHeader {
+        PACK(struct BlockHeader {
             FinestScaleTimeRepresentation start;
             FinestScaleTimeRepresentation end;
             uint8_t                      start_validity ;
             uint8_t                      end_validity ;
             char                         logger_record[126];
             uint64_t                     payload_size;
-        } __attribute__((__packed__));
+        });
 
         /**
          * File Serialization in a block-wise structure, so to better read contiguously the file by block size without any requirement for memory mapping or the like.

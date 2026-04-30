@@ -29,6 +29,8 @@
 #include "hostLib.h"
 #include "ioLib.h"
 #include "udpExample.h"
+#elif (defined(WIN32)|defined(_WIN64))
+#include <winsock2.h>
 #else
 #include <bits/stdc++.h>
 #include <unistd.h>
@@ -51,7 +53,7 @@
 static inline int GetWSASocketError(int sockfd)
 {
     int ris, OptVal = 1;
-    printf ("setsockopt()\n");
+    //printf ("setsockopt()\n");
     ris = setsockopt(sockfd, SOL_SOCKET, SO_ERROR, (char *)&OptVal, sizeof(OptVal));
     return(ris);
 }

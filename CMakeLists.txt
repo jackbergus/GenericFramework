@@ -3,6 +3,14 @@ project(GeneralFramework)
 
 set(CMAKE_CXX_STANDARD 17)
 
+if(WIN32)
+    set(UA_ENABLE_AMALGAMATION ON)
+    set(UA_NAMESPACE_ZERO full)
+    set(LINK_LIBRARY "ws2_32")
+else()
+    set(LINK_LIBRARY "pthread")
+endif ()
+
 #IF(CMAKE_BUILD_TYPE MATCHES Debug)
 #    message(WARNING "Compiling in debug mode")
 ##    add_compile_definitions(DEBUG)
@@ -23,7 +31,7 @@ include_directories(submodules/vxworks_linux/include)
 
 add_subdirectory(submodules/vxworks_linux/)
 
-add_library(GeneralFramework STATIC examples/example_record_serialization.cpp
+add_library(GeneralFramework OBJECT
         src/jackbergus/framework/Controller.cpp
         include/jackbergus/framework/Controller.h
         include/jackbergus/framework/structures/ControllerRequest.h
@@ -61,39 +69,43 @@ add_library(GeneralFramework STATIC examples/example_record_serialization.cpp
         include/jackbergus/framework/monitor/serializer/binary_to_csv_serializer.h
         src/jackbergus/monitor/serializer/binary_to_csv_serializer.cpp
 )
-target_link_libraries(GeneralFramework vxworks cpp_vxworks )
+#target_link_libraries(GeneralFramework vxworks cpp_vxworks ${LINK_LIBRARY} )
 
 
 add_executable(main examples/example_record_serialization.cpp)
-target_link_libraries(main GeneralFramework)
+target_link_libraries(main GeneralFramework ${LINK_LIBRARY}  vxworks cpp_vxworks GeneralFramework)
 
 add_executable(simple_double_example examples/simple_double_example.cpp)
-target_link_libraries(simple_double_example GeneralFramework)
+target_link_libraries(simple_double_example GeneralFramework ${LINK_LIBRARY}  vxworks cpp_vxworks GeneralFramework)
 
 add_executable(example_for_record_updates examples/example_for_record_updates.cpp
         include/jackbergus/data/UpdatableElement.h)
-target_link_libraries(example_for_record_updates GeneralFramework)
+target_link_libraries(example_for_record_updates GeneralFramework ${LINK_LIBRARY}  vxworks cpp_vxworks GeneralFramework)
 
 add_executable(example_record_serialization examples/example_record_serialization.cpp)
-target_link_libraries(example_record_serialization GeneralFramework)
+target_link_libraries(example_record_serialization GeneralFramework ${LINK_LIBRARY}  vxworks cpp_vxworks GeneralFramework)
 
 add_executable(signal_example examples/signal_example.cpp)
+target_link_libraries(signal_example ${LINK_LIBRARY}  vxworks cpp_vxworks GeneralFramework)
 
 add_executable(test_triple_buffer examples/test_triple_buffer.cpp)
+target_link_libraries(test_triple_buffer ${LINK_LIBRARY}  vxworks cpp_vxworks GeneralFramework)
 
 add_executable(test_thread_pool_with_scheduling examples/test_threadpoolsched.cpp)
-target_link_libraries(test_thread_pool_with_scheduling  vxworks cpp_vxworks)
+target_link_libraries(test_thread_pool_with_scheduling ${LINK_LIBRARY}  vxworks cpp_vxworks GeneralFramework )
 
 add_executable(example_EDF_sched examples/example_EDF_sched.cpp
         examples/admissible_nested_example.h
         include/jackbergus/networking/udp/UDPBiDirectional.h)
-target_link_libraries(example_EDF_sched  vxworks cpp_vxworks GeneralFramework)
+target_link_libraries(example_EDF_sched  ${LINK_LIBRARY} pthread vxworks cpp_vxworks GeneralFramework)
 
 add_executable(example_for_nested_record examples/example_for_nested_record.cpp)
-target_link_libraries(example_for_nested_record GeneralFramework)
+target_link_libraries(example_for_nested_record  ${LINK_LIBRARY}  vxworks cpp_vxworks GeneralFramework)
 
 add_executable(udp1 examples/udp1.cpp)
+target_link_libraries(udp1 ${LINK_LIBRARY}  vxworks cpp_vxworks GeneralFramework)
 add_executable(udp2 examples/udp2.cpp)
+target_link_libraries(udp2 ${LINK_LIBRARY}  vxworks cpp_vxworks GeneralFramework)
 
 add_executable(new_struct_delta examples/new_struct_delta.cpp)
-target_link_libraries(new_struct_delta GeneralFramework)
+target_link_libraries(new_struct_delta GeneralFramework ${LINK_LIBRARY}  vxworks cpp_vxworks GeneralFramework)

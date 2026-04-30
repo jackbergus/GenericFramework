@@ -23,6 +23,8 @@
 #define GENERALFRAMEWORK_UDPSERVER_H
 
 #include <jackbergus/networking/udp/udp.h>
+#include <vector>
+#include <unordered_set>
 
 template
 <typename signal_type>
@@ -56,7 +58,7 @@ public:
       struct timeval read_timeout;
       read_timeout.tv_sec = 0;
       read_timeout.tv_usec = 10;
-      ris = setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &read_timeout, sizeof read_timeout);
+      ris = setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO,(char *) &read_timeout, sizeof read_timeout);
       if (ris == -1)  {
         printf ("setsockopt() SO_RCVTIMEO failed, Errno: %d \"%s\"  SOCKET_ERROR=%d\n",
             errno,strerror(errno), GetWSASocketError(sockfd));
@@ -79,7 +81,7 @@ public:
   }
 
   bool recv_signal(void) {
-    socklen_t len;
+    int len;
     int n;
     len = sizeof(cliaddr);  //len is value/result
     signal_type result;
@@ -113,7 +115,11 @@ public:
   void close() {
     // Close socket
     if (sockfd>=0) {
+#if defined(WIN32) || defined(_WIN32) || defined(WIN64) || defined(_WIN64)
+      closesocket(sockfd);
+#else
       ::close(sockfd);
+#endif
       sockfd = -1;
     }
   }

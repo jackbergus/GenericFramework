@@ -25,10 +25,12 @@
 #include <filesystem>
 #include <set>
 #include <vector>
-#include <sys/unistd.h>
+//#include <sys/unistd.h>
 
 #include <jackbergus/framework/monitor/deserializer/RecordFileDeserializer.h>
 #include <jackbergus/framework/types/NativeTypes.h>
+
+#include <cstdio>
 
 
 bool clearYamlWithMultiBinaries(const std::string& file_name) {
@@ -53,7 +55,8 @@ bool clearYamlWithMultiBinaries(const std::string& file_name) {
                 // Doing a first read, and getting all the shared temporal indices....
                 const auto& binary_file_name = v["binary"].as_str();
                 if (std::filesystem::is_regular_file(binary_file_name)) {
-                    if (unlink(binary_file_name.c_str()) == -1) {
+
+                    if (std::remove(binary_file_name.c_str()) == -1) {
                         result = false;
                     }
                 } else {
@@ -62,7 +65,7 @@ bool clearYamlWithMultiBinaries(const std::string& file_name) {
             }
         }
     }
-    if (unlink(file_name.c_str()) == -1)
+    if (std::remove(file_name.c_str()) == -1)
         result = false;
     return result;
 }

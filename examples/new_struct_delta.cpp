@@ -16,7 +16,7 @@
 #include <jackbergus/framework/monitor/serializer/binary_to_csv_serializer.h>
 
 #include <jackbergus/framework/monitor/deserializer/FileLogger.h>
-#include <sys/unistd.h>
+//#include <sys/unistd.h>
 
 
 int main(void) {
@@ -130,6 +130,6 @@ int main(void) {
     admissible_headers_for_serialization.clear();
 
     convert_binary_to_csv(binary_file, final_csv_file, admissible_headers_for_serialization);
-    unlink(binary_file.c_str());
-    unlink(yaml_file.c_str());
+    std::remove(binary_file.c_str());
+    std::remove(yaml_file.c_str());
 }
