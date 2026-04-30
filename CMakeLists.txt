@@ -73,26 +73,26 @@ add_library(GeneralFramework OBJECT
 
 
 add_executable(main examples/example_record_serialization.cpp)
-target_link_libraries(main GeneralFramework ${LINK_LIBRARY}  vxworks cpp_vxworks GeneralFramework)
+target_link_libraries(main GeneralFramework ${LINK_LIBRARY} pthread vxworks cpp_vxworks GeneralFramework)
 
 add_executable(simple_double_example examples/simple_double_example.cpp)
-target_link_libraries(simple_double_example GeneralFramework ${LINK_LIBRARY}  vxworks cpp_vxworks GeneralFramework)
+target_link_libraries(simple_double_example GeneralFramework ${LINK_LIBRARY} pthread vxworks cpp_vxworks GeneralFramework)
 
 add_executable(example_for_record_updates examples/example_for_record_updates.cpp
         include/jackbergus/data/UpdatableElement.h)
-target_link_libraries(example_for_record_updates GeneralFramework ${LINK_LIBRARY}  vxworks cpp_vxworks GeneralFramework)
+target_link_libraries(example_for_record_updates GeneralFramework ${LINK_LIBRARY} pthread vxworks cpp_vxworks GeneralFramework)
 
 add_executable(example_record_serialization examples/example_record_serialization.cpp)
-target_link_libraries(example_record_serialization GeneralFramework ${LINK_LIBRARY}  vxworks cpp_vxworks GeneralFramework)
+target_link_libraries(example_record_serialization GeneralFramework ${LINK_LIBRARY} pthread vxworks cpp_vxworks GeneralFramework)
 
 add_executable(signal_example examples/signal_example.cpp)
-target_link_libraries(signal_example ${LINK_LIBRARY}  vxworks cpp_vxworks GeneralFramework)
+target_link_libraries(signal_example ${LINK_LIBRARY} pthread vxworks cpp_vxworks GeneralFramework)
 
 add_executable(test_triple_buffer examples/test_triple_buffer.cpp)
-target_link_libraries(test_triple_buffer ${LINK_LIBRARY}  vxworks cpp_vxworks GeneralFramework)
+target_link_libraries(test_triple_buffer ${LINK_LIBRARY} pthread vxworks cpp_vxworks GeneralFramework)
 
 add_executable(test_thread_pool_with_scheduling examples/test_threadpoolsched.cpp)
-target_link_libraries(test_thread_pool_with_scheduling ${LINK_LIBRARY}  vxworks cpp_vxworks GeneralFramework )
+target_link_libraries(test_thread_pool_with_scheduling ${LINK_LIBRARY} pthread vxworks cpp_vxworks GeneralFramework )
 
 add_executable(example_EDF_sched examples/example_EDF_sched.cpp
         examples/admissible_nested_example.h
@@ -100,12 +100,12 @@ add_executable(example_EDF_sched examples/example_EDF_sched.cpp
 target_link_libraries(example_EDF_sched  ${LINK_LIBRARY} pthread vxworks cpp_vxworks GeneralFramework)
 
 add_executable(example_for_nested_record examples/example_for_nested_record.cpp)
-target_link_libraries(example_for_nested_record  ${LINK_LIBRARY}  vxworks cpp_vxworks GeneralFramework)
+target_link_libraries(example_for_nested_record  ${LINK_LIBRARY} pthread vxworks cpp_vxworks GeneralFramework)
 
 add_executable(udp1 examples/udp1.cpp)
-target_link_libraries(udp1 ${LINK_LIBRARY}  vxworks cpp_vxworks GeneralFramework)
+target_link_libraries(udp1 ${LINK_LIBRARY} pthread vxworks cpp_vxworks GeneralFramework)
 add_executable(udp2 examples/udp2.cpp)
-target_link_libraries(udp2 ${LINK_LIBRARY}  vxworks cpp_vxworks GeneralFramework)
+target_link_libraries(udp2 ${LINK_LIBRARY} pthread vxworks cpp_vxworks GeneralFramework)
 
 add_executable(new_struct_delta examples/new_struct_delta.cpp)
-target_link_libraries(new_struct_delta GeneralFramework ${LINK_LIBRARY}  vxworks cpp_vxworks GeneralFramework)
+target_link_libraries(new_struct_delta GeneralFramework ${LINK_LIBRARY} pthread vxworks cpp_vxworks GeneralFramework)
