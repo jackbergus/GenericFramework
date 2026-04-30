@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 4.0)
 project(GeneralFramework)
 
 set(CMAKE_CXX_STANDARD 17)
-
+set(BUILD_SHARED OFF)
 if(WIN32)
     set(UA_ENABLE_AMALGAMATION ON)
     set(UA_NAMESPACE_ZERO full)
@@ -20,16 +20,22 @@ else()
     set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 ENDIF(CMAKE_BUILD_TYPE MATCHES Debug)
 
+add_compile_definitions(ENABLE_DRAFT)
+
 include_directories(include)
 include_directories(submodules/fkYAML/include)
 include_directories(submodules/refl-cpp/include)
 include_directories(submodules/magic_enum/include)
 include_directories(submodules/narcissus/include)
 include_directories(submodules/vxworks_linux/include)
-#include_directories(submodules/narcissus/submodule/field-reflection/include)
-#include_directories(submodules/narcissus/submodule/magic_enum/include)
+include_directories(submodules/libzmq/include)
+include_directories(submodules/cppzmq)
 
+add_subdirectory(submodules/libzmq/)
 add_subdirectory(submodules/vxworks_linux/)
+
+include_directories(${ZMQ_INCLUDE_DIRS})
+
 
 add_library(GeneralFramework OBJECT
         src/jackbergus/framework/Controller.cpp
@@ -103,9 +109,9 @@ add_executable(example_for_nested_record examples/example_for_nested_record.cpp)
 target_link_libraries(example_for_nested_record  ${LINK_LIBRARY} pthread vxworks cpp_vxworks GeneralFramework)
 
 add_executable(udp1 examples/udp1.cpp)
-target_link_libraries(udp1 ${LINK_LIBRARY} pthread vxworks cpp_vxworks GeneralFramework)
+target_link_libraries(udp1 ${LINK_LIBRARY} pthread libzmq-static vxworks cpp_vxworks GeneralFramework )
 add_executable(udp2 examples/udp2.cpp)
-target_link_libraries(udp2 ${LINK_LIBRARY} pthread vxworks cpp_vxworks GeneralFramework)
+target_link_libraries(udp2 ${LINK_LIBRARY} pthread libzmq-static vxworks cpp_vxworks GeneralFramework)
 
 add_executable(new_struct_delta examples/new_struct_delta.cpp)
 target_link_libraries(new_struct_delta GeneralFramework ${LINK_LIBRARY} pthread vxworks cpp_vxworks GeneralFramework)

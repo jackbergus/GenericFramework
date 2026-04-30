@@ -16,3 +16,9 @@
 [submodule "submodules/refl-cpp"]
 	path = submodules/refl-cpp
 	url = https://github.com/veselink1/refl-cpp
+[submodule "submodules/libzmq"]
+	path = submodules/libzmq
+	url = https://github.com/zeromq/libzmq
+[submodule "submodules/cppzmq"]
+	path = submodules/cppzmq
+	url = https://github.com/zeromq/cppzmq

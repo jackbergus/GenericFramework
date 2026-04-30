@@ -19,6 +19,14 @@
 // Created by gyankos on 26/03/26.
 //
 
+#define ZMQ_BUILD_DRAFT_API
+#include <zmq.hpp>
+#include <iostream>
+#include <thread>
+#include <chrono>
+#define MCAST_GROUP         ("mcast_test")
+
+#if 0
 
 #if defined(__vxworks)
 #include "vxWorks.h"
@@ -57,5 +65,8 @@ static inline int GetWSASocketError(int sockfd)
     ris = setsockopt(sockfd, SOL_SOCKET, SO_ERROR, (char *)&OptVal, sizeof(OptVal));
     return(ris);
 }
+#endif
+
+
 
 #endif

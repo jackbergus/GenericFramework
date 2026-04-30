@@ -43,7 +43,7 @@ public:
           target_port(target_port),
           source_port(source_port), do_wait_(doWait), sec_wait_(sec_wait), usec_wait_(usec_wait) {
         client = UDPClient<signal_type>::instance(target_ip, target_port);
-        server = UDPServer<signal_type>::instance(source_ip, source_port, doWait, sec_wait, usec_wait);
+        server = UDPServer<signal_type>::instance(source_ip, source_port, doWait);
     }
 
     bool send(const signal_type& signal) {

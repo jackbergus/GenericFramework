@@ -31,71 +31,93 @@ template
 class UDPServer {
   std::string server_ip;
   int         server_port;
-  struct sockaddr_in servaddr, cliaddr;
-  int         sockfd;
+  // struct sockaddr_in servaddr, cliaddr;
+  int         rc;
+  void *ctx{nullptr};
+  void *dish{nullptr};
+  bool doWait;
+  std::string mcast_group;
 
-  UDPServer(const std::string& ip, int port, int socket) : server_ip(ip), server_port(port), sockfd(socket) {
-
+  UDPServer(const std::string& ip, int port, bool doWait) : server_ip(ip), server_port(port), doWait(doWait) {
+    ctx = zmq_ctx_new();
+    dish = zmq_socket(ctx, ZMQ_DISH);
+    mcast_group = "udp://" + server_ip + ":" + std::to_string(server_port);
+    rc = zmq_bind(dish, mcast_group.c_str());
+    zmq_join(dish, MCAST_GROUP);
   }
-
 
 public:
   // static constexpr uint64_t MAX_VAL = (1 << magic_enum::detail::range_max<signal_type>::value);
 
-  static UDPServer* instance(const std::string& ip, int port, bool doWait = false, unsigned long sec_wait = 0, unsigned long usec_wait = 10) {
-    int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
-    if (sockfd < 0) {
-      return nullptr;
-    }
-    int OptVal = 1;
-    auto ris = setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (char *)&OptVal, sizeof(OptVal));
-    if (ris == -1)  {
-      printf ("setsockopt() SO_REUSEADDR failed, Errno: %d \"%s\"  SOCKET_ERROR=%d\n",
-          errno,strerror(errno), GetWSASocketError(sockfd));
-      return nullptr;
-    }
-    if (!doWait) {
-      struct timeval read_timeout;
-      read_timeout.tv_sec = 0;
-      read_timeout.tv_usec = 10;
-      ris = setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO,(char *) &read_timeout, sizeof read_timeout);
-      if (ris == -1)  {
-        printf ("setsockopt() SO_RCVTIMEO failed, Errno: %d \"%s\"  SOCKET_ERROR=%d\n",
-            errno,strerror(errno), GetWSASocketError(sockfd));
-        return nullptr;
-      }
-    }
-    struct sockaddr_in Local;
-    memset(&Local, 0, sizeof(servaddr));
-    // Fill server address info
-    Local.sin_family = AF_INET;              // IPv4
-    Local.sin_port   = htons(port);          // Server port
-    Local.sin_addr.s_addr = inet_addr(ip.c_str()); // Server IP
-    ris = bind(sockfd, (struct sockaddr*) &Local, sizeof(Local));
-    if (ris == -1)  {
-      printf ("listen() failed, Err: %d \"%s\"  SOCKET_ERROR=%d\n",
-          errno, strerror(errno), GetWSASocketError(sockfd));
-      return nullptr;
-    }
-    return new UDPServer(ip, port, sockfd);
+  static UDPServer* instance(const std::string& ip, int port, bool doWait = false /*unsigned long sec_wait = 0, unsigned long usec_wait = 10*/) {
+    // int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+    // if (sockfd < 0) {
+    //   return nullptr;
+    // }
+    // int OptVal = 1;
+    // auto ris = setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (char *)&OptVal, sizeof(OptVal));
+    // if (ris == -1)  {
+    //   printf ("setsockopt() SO_REUSEADDR failed, Errno: %d \"%s\"  SOCKET_ERROR=%d\n",
+    //       errno,strerror(errno), GetWSASocketError(sockfd));
+    //   return nullptr;
+    // }
+    // if (!doWait) {
+    //   struct timeval read_timeout;
+    //   read_timeout.tv_sec = 0;
+    //   read_timeout.tv_usec = 10;
+    //   ris = setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO,(char *) &read_timeout, sizeof read_timeout);
+    //   if (ris == -1)  {
+    //     printf ("setsockopt() SO_RCVTIMEO failed, Errno: %d \"%s\"  SOCKET_ERROR=%d\n",
+    //         errno,strerror(errno), GetWSASocketError(sockfd));
+    //     return nullptr;
+    //   }
+    // }
+    // struct sockaddr_in Local;
+    // memset(&Local, 0, sizeof(servaddr));
+    // // Fill server address info
+    // Local.sin_family = AF_INET;              // IPv4
+    // Local.sin_port   = htons(port);          // Server port
+    // Local.sin_addr.s_addr = inet_addr(ip.c_str()); // Server IP
+    // ris = bind(sockfd, (struct sockaddr*) &Local, sizeof(Local));
+    // if (ris == -1)  {
+    //   printf ("listen() failed, Err: %d \"%s\"  SOCKET_ERROR=%d\n",
+    //       errno, strerror(errno), GetWSASocketError(sockfd));
+    //   return nullptr;
+    // }
+    return new UDPServer(ip, port, doWait);
   }
 
   bool recv_signal(void) {
-    int len;
-    int n;
-    len = sizeof(cliaddr);  //len is value/result
+    zmq_msg_t recv_msg;
+    zmq_msg_init (&recv_msg);
+    auto flag = doWait ? 0 : ZMQ_DONTWAIT;
     signal_type result;
-    n = recvfrom(sockfd, (char *)&result, sizeof(signal_type),
-                0, ( struct sockaddr *) &cliaddr,
-                &len);
-    if (n==sizeof(result)) {
+    int val = zmq_recvmsg (dish, &recv_msg, flag );
+    bool resultIsGood;
+    if (val == sizeof(result)) {
+      result = *(signal_type*)zmq_msg_data(&recv_msg);
       bitset_.insert(result);
-      return true;
-
+      resultIsGood = true;
     } else {
-      std::cout << strerror(errno) << std::endl;
-      return false;
+      resultIsGood = false;
     }
+    zmq_msg_close (&recv_msg);
+    return resultIsGood;
+    // int len;
+    // int n;
+    // len = sizeof(cliaddr);  //len is value/result
+    // signal_type result;
+    // n = recvfrom(sockfd, (char *)&result, sizeof(signal_type),
+    //             0, ( struct sockaddr *) &cliaddr,
+    //             &len);
+    // if (n==sizeof(result)) {
+    //   bitset_.insert(result);
+    //   return true;
+    //
+    // } else {
+    //   std::cout << strerror(errno) << std::endl;
+    //   return false;
+    // }
   }
 
   std::vector<signal_type> getActiveSignals() {
@@ -114,13 +136,13 @@ public:
 
   void close() {
     // Close socket
-    if (sockfd>=0) {
-#if defined(WIN32) || defined(_WIN32) || defined(WIN64) || defined(_WIN64)
-      closesocket(sockfd);
-#else
-      ::close(sockfd);
-#endif
-      sockfd = -1;
+    if (dish) {
+      zmq_close(dish);
+      dish = nullptr;
+    }
+    if (ctx) {
+      zmq_ctx_term(ctx);
+      ctx = nullptr;
     }
   }
 
