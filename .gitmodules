@@ -15,7 +15,7 @@
 	url = https://github.com/fktn-k/fkYAML
 [submodule "submodules/refl-cpp"]
 	path = submodules/refl-cpp
-	url = https://github.com/veselink1/refl-cpp
+	url = https://github.com/jackbergus/refl-cpp.git
 [submodule "submodules/libzmq"]
 	path = submodules/libzmq
 	url = https://github.com/zeromq/libzmq
