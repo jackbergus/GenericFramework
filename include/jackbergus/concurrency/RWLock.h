@@ -26,6 +26,7 @@
 #include <thread>
 #include <memory>
 
+#include <jackbergus/framework/types/NativeTypes.h>
 #include <jackbergus/framework/monitor/AbstractVariableMonitor.h>
 
 namespace jackbergus::concurrency {
@@ -36,7 +37,7 @@ namespace jackbergus::concurrency {
         public:
             RWLock(std::shared_ptr<framework::AbstractVariableMonitor<Type>>& obj) : obj(obj) {}
 
-            [[nodiscard]] const FinestScaleTimeRepreentation getCurrentTime() const override {
+            [[nodiscard]] const jackbergus::framework::FinestScaleTimeRepresentation getCurrentTime() const override {
                 if (!obj)
                     return -1;
                 {
@@ -87,7 +88,7 @@ namespace jackbergus::concurrency {
                     return obj.setInvalidValue(curr_t);
                 }
             }
-            virtual bool updateValue(FinestScaleTimeRepreentation curr_t,
+            virtual bool updateValue(jackbergus::framework::FinestScaleTimeRepresentation curr_t,
                              const Type& value) {
             if (!obj)
                 return false;
