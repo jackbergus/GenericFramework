@@ -91,6 +91,8 @@ target_link_libraries(example_for_record_updates GeneralFramework ${LINK_LIBRARY
 add_executable(example_record_serialization examples/example_record_serialization.cpp)
 target_link_libraries(example_record_serialization GeneralFramework ${LINK_LIBRARY} pthread vxworks cpp_vxworks GeneralFramework)
 
+add_executable(example_new_refl examples/example_new_refl.cpp)
+
 add_executable(signal_example examples/signal_example.cpp)
 target_link_libraries(signal_example ${LINK_LIBRARY} pthread vxworks cpp_vxworks GeneralFramework)
 

@@ -16,11 +16,21 @@ struct Element1_N {
     int16_t voi_;
 };
 
+#include <limits>
+
+constexpr auto uint32M = std::numeric_limits<uint32_t>::max();
+constexpr auto uint8M = std::numeric_limits<uint8_t>::max();
+constexpr auto int16M = std::numeric_limits<int16_t>::max();
+
+
+
 struct Element2_N {
     int16_t cho;
     int16_t voi_;
     uint32_t val;
 };
+
+
 
 struct Final_N {
     Element1_N first;
@@ -29,7 +39,39 @@ struct Final_N {
     uint8_t enumerato;
 };
 
+namespace std {
+    template<>
+    struct numeric_limits<Element1_N> {
+        constexpr static Element1_N min() {
+            return {0,0,0,0};
+        }
+        constexpr static Element1_N max() {
+            return {uint32M,uint32M,int16M,int16M};
+        }
+    };
 
+    template<>
+struct numeric_limits<Element2_N> {
+        constexpr static Element2_N min() {
+            return {0,0,0};
+        }
+        constexpr static Element2_N max() {
+
+            return {int16M,int16M, uint32M};
+        }
+    };
+
+    template<>
+struct numeric_limits<Final_N> {
+        constexpr static Final_N min() {
+            return {numeric_limits<Element1_N>::min(),0,0};
+        }
+        constexpr static Final_N max() {
+            constexpr auto snd = numeric_limits<Element2_N>::max();
+            return {numeric_limits<Element1_N>::max(), {snd,snd,snd,snd,snd,snd,snd,snd,snd,snd}, uint32M, uint8M};
+        }
+    };
+}
 
 #include "jackbergus/data/NetworkFloat.h"
 #include "jackbergus/data/NetworkInt.h"
