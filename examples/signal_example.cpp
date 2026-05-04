@@ -17,16 +17,17 @@ enum class signal_test : uint64_t {
 
 
 int main(void) {
-  UDPServer<signal_test>* st_server = UDPServer<signal_test>::instance("127.0.0.1", 8089);
+  UDPServer<signal_test>* st_server = UDPServer<signal_test>::instance("127.0.0.1", 40001, false);
   if (st_server == nullptr) {
     return 1;
   }
-  UDPClient<signal_test>* st_client = UDPClient<signal_test>::instance("127.0.0.1", 8089);
+  UDPClient<signal_test>* st_client = UDPClient<signal_test>::instance("127.0.0.1", 40001);
   if (st_client == nullptr) {
     return 2;
   }
   st_client->send_signal(signal_test::SIGNAL_A);
   st_client->send_signal(signal_test::SIGNAL_C);
+  sleep(1); // While with raw UDP it was almost immediate, with this we have some kind of delay...
   while (st_server->recv_signal());
   std::cout << (*st_server)[signal_test::SIGNAL_A] << std::endl;
   std::cout << (*st_server)[signal_test::SIGNAL_B] << std::endl;

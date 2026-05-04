@@ -94,7 +94,7 @@ target_link_libraries(example_record_serialization GeneralFramework ${LINK_LIBRA
 add_executable(example_new_refl examples/example_new_refl.cpp)
 
 add_executable(signal_example examples/signal_example.cpp)
-target_link_libraries(signal_example ${LINK_LIBRARY} pthread vxworks cpp_vxworks GeneralFramework)
+target_link_libraries(signal_example ${LINK_LIBRARY} pthread libzmq-static vxworks cpp_vxworks GeneralFramework)
 
 add_executable(test_triple_buffer examples/test_triple_buffer.cpp)
 target_link_libraries(test_triple_buffer ${LINK_LIBRARY} pthread vxworks cpp_vxworks GeneralFramework)

@@ -118,9 +118,9 @@ static_assert(sizeof(std::array<Element2_L,10>) == sizeof(Element2_L[10]));
 REFL_AUTO(type(Element1_N), field(val), field(jes), field(cho), field(voi_))
 REFL_AUTO(type(Element2_N), field(cho), field(voi_), field(val))
 REFL_AUTO(type(Final_N), field(first), field(second), field(third), field(enumerato))
-REFL_AUTO(type(Element1_L), field(val), field(jes), field(cho), field(voi_))
-REFL_AUTO(type(Element2_L), field(cho), field(voi_), field(val))
-REFL_AUTO(type(Final_L), field(first), field(second), field(third), field(objectivo))
+REFL_AUTO(type(Element1_L), sfield(val), sfield(jes), sfield(cho), sfield(voi_))
+REFL_AUTO(type(Element2_L), sfield(cho), sfield(voi_), sfield(val))
+REFL_AUTO(type(Final_L), sfield(first), sfield(second), sfield(third), sfield(objectivo))
 
 enum testing_enums_for_first_time : uint8_t {
     VAL_0 = 0,

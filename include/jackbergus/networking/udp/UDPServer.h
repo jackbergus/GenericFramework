@@ -99,6 +99,7 @@ public:
       bitset_.insert(result);
       resultIsGood = true;
     } else {
+      std::cout << strerror(errno) << std::endl;
       resultIsGood = false;
     }
     zmq_msg_close (&recv_msg);
