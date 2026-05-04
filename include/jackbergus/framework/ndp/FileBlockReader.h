@@ -52,10 +52,10 @@ namespace jackbergus {
                 filp = nullptr;
             }
 
-            bool read(FileBlockWrapper<block_size>& out) {
+            bool read(FileBlockWrapper<block_size>& out, bool blockHeadIndexer = true) {
                 if (!filp)
                     return false;
-                out.next(filp);
+                out.next(filp, blockHeadIndexer);
                 return out.isValidInput();
             }
 

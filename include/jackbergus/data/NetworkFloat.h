@@ -19,8 +19,8 @@
 #ifndef FLOATMAX_NETWORKFLOAT_H
 #define FLOATMAX_NETWORKFLOAT_H
 
-#include "jackbergus/data/packed.h"
-#include "jackbergus/data/FltForTemplateParam.h"
+#include <jackbergus/data/packed.h>
+#include <jackbergus/data/FltForTemplateParam.h>
 #include <type_traits>
 #include <cstdint>
 #include <cmath>

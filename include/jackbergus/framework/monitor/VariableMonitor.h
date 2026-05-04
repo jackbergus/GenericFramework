@@ -21,8 +21,7 @@
 
 #include <optional>
 #include <jackbergus/framework/types/NativeTypes.h>
-
-#include "AbstractVariableMonitor.h"
+#include <jackbergus/framework/monitor/AbstractVariableMonitor.h>
 
 namespace jackbergus {
     namespace framework {

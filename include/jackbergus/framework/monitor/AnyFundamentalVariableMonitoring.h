@@ -19,6 +19,7 @@
 #ifndef GENERALFRAMEWORK_ANYFUNDAMENTALVARIABLEMONITORING_H
 #define GENERALFRAMEWORK_ANYFUNDAMENTALVARIABLEMONITORING_H
 
+#include <cmath>
 #include <cstdint>
 #include <jackbergus/framework/monitor/ContinuousMonitoring.h>
 #include <jackbergus/framework/monitor/NativeTypeMonitoring.h>
@@ -26,6 +27,8 @@
 #include <jackbergus/framework/types/NativeTypes.h>
 #include <cstring>
 #include <vector>
+#include <magic_enum/magic_enum.hpp>
+
 
 namespace jackbergus {
     namespace framework {
@@ -158,7 +161,8 @@ template <uint64_t block_size = 1024>
                 } else {
                     AnyVariableMonitoring s;
                     s.start_time = start_time;
-                    s.end_time_inclusive = end_time_inclusive;
+                    const auto prev = std::nextafter(curr_t, std::numeric_limits<FinestScaleTimeRepresentation>::lowest());
+                    s.end_time_inclusive = std::max(end_time_inclusive, prev);
                     s.value = current_value;
                     pushRecord(std::move(s));
                     start_time = end_time_inclusive = curr_t;
@@ -226,7 +230,8 @@ template <uint64_t block_size = 1024>
                     } else {
                         AnyVariableMonitoring s;
                         s.start_time = start_time;
-                        s.end_time_inclusive = end_time_inclusive;
+                        const auto prev = std::nextafter(curr_t, std::numeric_limits<FinestScaleTimeRepresentation>::lowest());
+                        s.end_time_inclusive = std::max(end_time_inclusive, prev);
                         s.value = current_value;
                         pushRecord(std::move(s));
                         start_time = end_time_inclusive = curr_t;
@@ -240,7 +245,6 @@ template <uint64_t block_size = 1024>
     } // framework
 } // jackbergus
 
-#include <magic_enum/magic_enum.hpp>
 
 template <typename T, uint64_t block_size = 1024>
 jackbergus::framework::AnyFundamentalVariableMonitoring<block_size> flatten_type_to_enum(jackbergus::framework::FinestScaleTimeRepresentation start_time, uint64_t val, const std::string& name) {
@@ -313,7 +317,7 @@ jackbergus::framework::AnyFundamentalVariableMonitoring<block_size> flatten_type
         static_assert(false, "pointers are not supported: please consider flattening the type");
     }
     else if constexpr (std::is_class_v<T>) {
-        static_assert(false, "unions are not supported: please consider flattening the type");
+        static_assert(false, "classes are not supported: please consider flattening the type");
     } else {
         static_assert(false, "unsupported unknown type case");
     }

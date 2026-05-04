@@ -1,0 +1,15 @@
+//
+// Created by mbda on 28/04/2026.
+//
+
+#ifndef GENERALFRAMEWORK_UDP_SIGNALS_EXAMPLE_H
+#define GENERALFRAMEWORK_UDP_SIGNALS_EXAMPLE_H
+
+enum udp_example_signals {
+    HELLO,
+    WORLD,
+    CIAO,
+    MONDO
+};
+
+#endif //GENERALFRAMEWORK_UDP_SIGNALS_EXAMPLE_H
