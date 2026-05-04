@@ -24,6 +24,8 @@
 
 #include <cstdint>
 #include <string>
+#include <unordered_map>
+#include <vector>
 #include <narcissus/reflection/type_cases.h>
 
 namespace jackbergus {
@@ -33,6 +35,7 @@ namespace jackbergus {
                 std::string field_name;
                 type_cases field_type;
                 uint64_t field_value_size;
+                std::unordered_map<uint64_t, std::string> field_value_map;
 
                 FieldGetting(const std::string &field_name, type_cases field_type, uint64_t field_value_size);
                 FieldGetting();
@@ -41,6 +44,16 @@ namespace jackbergus {
                 FieldGetting &operator=(const FieldGetting &) = default;
                 FieldGetting &operator=(FieldGetting &&) = default;
             };
+
+
+            struct SerializedStructureInfo {
+                std::string struct_name;
+                uint8_t struct_id;
+                std::vector<std::string> field_names;
+                std::vector<jackbergus::data::deserializer::FieldGetting> fields;
+                std::unordered_map<std::string, uint64_t> names_to_fieldsidx;
+            };
+
         } // serializer
     } // data
 } // jackbergus

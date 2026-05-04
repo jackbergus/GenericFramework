@@ -8,7 +8,7 @@
 
 #include <fkYAML/node.hpp>
 
-#include "jackbergus/framework/monitor//serializer/binary_to_csv_serializer.h"
+#include "jackbergus/framework/monitor//serializer/multibinary_to_csv_serializer.h"
 
 struct ExampleStructure {
     uint64_t a, b, c, d, e;
@@ -56,5 +56,5 @@ int main() {
         }
     }
 
-    binary_to_csv_serializer("/home/gyankos/Documenti/GeneralFramework/cmake-build-debug", file_name);
+    multibinary_to_csv_serializer("/home/gyankos/Documenti/GeneralFramework/cmake-build-debug", file_name);
 }

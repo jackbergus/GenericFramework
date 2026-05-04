@@ -1,29 +1,24 @@
 //
-// Created by mbda on 27/04/2026.
+// Created by Giacomo Bergami, PhD on 27/04/2026.
 //
 
 #include <narcissus/lightweight_any.h>
 #include "admissible_nested_example.h"
 #include "jackbergus/framework/monitor/AnyStructMonitoring.h"
-#include "jackbergus/framework/monitor/serializer/binary_to_csv_serializer.h"
+#include "jackbergus/framework/monitor/serializer/multibinary_to_csv_serializer.h"
 
-struct BogusConcurrentDataRecord {
-     uint64_t val;
-     double   timestamp;
-};
-
-REFL_AUTO(type(BogusConcurrentDataRecord), field(val), field(timestamp))
 
 int main() {
      {
           Final_N final_n;
+          memset(&final_n, 0, sizeof(final_n));
           auto rs = jackbergus::framework::getNativeType<Final_N>(0);
           std::cout << "Final_N: " << std::endl;
           std::cout << "=========" << std::endl;
           for (const auto& ref : rs) {
                std::cout << ref.field_name() << std::endl;
           }
-          memset(&final_n, 0, sizeof(final_n));
+
 
           jackbergus::framework::AnyStructMonitoring<Final_N> mimicking_serialization(0); // Starting at zero with an invalid value (mimicking external configurations, that are set only once they are known).
           mimicking_serialization.setFile("Final_N");
@@ -88,6 +83,6 @@ int main() {
           mimicking_serialization.clearFile();
      }
 
-     binary_to_csv_serializer("C:\\Users\\diste\\Downloads\\GenericFramework2\\cmake-build-debug", "final_flattened_csv_file.csv");
-     clearFolderWithYamls("C:\\Users\\diste\\Downloads\\GenericFramework2\\cmake-build-debug");
+     multibinary_to_csv_serializer("C:\\Users\\diste\\Downloads\\GenericFramework2\\cmake-build-debug", "final_flattened_csv_file.csv");
+     clearMultibinaryFolderWithYamls("C:\\Users\\diste\\Downloads\\GenericFramework2\\cmake-build-debug");
 }

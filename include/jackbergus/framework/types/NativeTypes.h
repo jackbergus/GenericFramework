@@ -24,6 +24,7 @@
 namespace jackbergus {
     namespace framework {
         using FinestScaleTimeRepresentation = double;
+
     }
 }
 #endif //GENERALFRAMEWORK_NATIVETYPES_H

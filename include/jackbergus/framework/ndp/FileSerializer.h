@@ -23,18 +23,42 @@
 #include <fstream>
 #include <cstring>
 
+#include <narcissus/reflection/type_cases.h>
 #include <jackbergus/framework/types/NativeTypes.h>
 
+#include <magic_enum/magic_enum.hpp>
+#include <jackbergus/data/packed.h>
 namespace jackbergus {
     namespace framework {
-        struct BlockHeader {
+        struct new_delta_data_structure {
+            double      timestamp = 0.0;                  // Timestamp at which the current value is considered.
+            uint8_t     structure_id = 0;               // Data structure containing the field described in the forthcoming steps
+            type_cases  actual_type = type_cases::T_UNEXPECTED;                // Actual type determining the type that I am serializing. From this, I should be able to infer the actual datum size, as these are just native elements
+            uint8_t     unnested_field_id = 0;          // Actual offset Id within the nested data structure that I am considering
+            uint8_t     actual_size = 0;                // Redundant field with  actual_type, as knowing the native type should entail the actual_size
+            uint8_t     is_starting_of_structure = 0;   // Under the circumstance that I am writing multiple possible fields being changed of the data structure, whether I am starting to write this. This is mainly to ensure consistency of the deserialization (if something broke, that is there is no ending part, then I am ignoring something coming afterwards).
+            uint8_t     is_end_of_structure = 0;        // Under the assumption that something is starting to be written, this remarks whether I am terminating to write something concerning the data structure.
+            uint8_t     is_continuing_of_structure = 0; // Whether I started to do some writing, whether I am continuing to do so
+            uint8_t     CRC = 0;                        // Data validity check. If the data is no more valid, I am ignoring writing the datum, and I am reporting a nan (so to remark the difference with n/a, value not provided, and nan, error in the data)
+            uint64_t    actual_data = 0;                // Buffer of arbitrary data where the values stored should be there
+
+            static_assert(sizeof(type_cases) <= sizeof(uint8_t) && std::is_same_v<magic_enum::underlying_type_t<type_cases>, uint8_t>, "type_cases used for representing the type to be serialize should be within the uint8_t range");
+            static_assert(std::numeric_limits<uint8_t>::max() >= sizeof(uint64_t), "This works under the assumption that I am representing native types being at most 64 bit long. Thus, I can fit this description within a 64 bit element");
+
+            void setCRC() {
+                CRC = *((uint64_t*)((double*)&timestamp)) ^ actual_data;
+            }
+        };
+        static_assert(sizeof(new_delta_data_structure) == sizeof(uint64_t)*3);
+
+        PACK(struct BlockHeader {
             FinestScaleTimeRepresentation start;
             FinestScaleTimeRepresentation end;
             uint8_t                      start_validity ;
             uint8_t                      end_validity ;
             char                         logger_record[126];
             uint64_t                     payload_size;
-        } __attribute__((__packed__));
+        });
 
         /**
          * File Serialization in a block-wise structure, so to better read contiguously the file by block size without any requirement for memory mapping or the like.
@@ -78,7 +102,7 @@ namespace jackbergus {
                 stream_is_open = std::filesystem::is_regular_file(filename) || (!std::filesystem::is_directory(filename));
                 written_element = 0;
                 written_offset = 0;
-                static_assert(sizeof(BlockHeader) < block_size, "BlockHeader size mismatch");
+                //static_assert(sizeof(BlockHeader) < block_size, "BlockHeader size mismatch");
             }
 
             template <typename T>
@@ -98,6 +122,24 @@ namespace jackbergus {
                         memcpy(&buffer[written_offset], (void*)&block, sizeof(block));
                         memcpy(&buffer[written_offset+sizeof(block)], data_ptr, data_size);
                         written_offset += (data_size + sizeof(block));
+                        written_element += 1;
+                        return true;
+                    }
+                }
+            }
+
+            bool write(void* data_ptr, uint64_t data_size) {
+                if (!stream_is_open) return false;
+                else {
+                    if (data_size > BUFFER_SIZE) {
+                        return false; // ERROR: cannot have the data and the block to be greater than the actual block size. Something fishy is going here...
+                    } else {
+                        if (data_size + written_offset > BUFFER_SIZE) {
+                            flush();
+                        }
+                        // memcpy(&buffer[written_offset], (void*)&block, sizeof(block));
+                        memcpy(&buffer[written_offset], data_ptr, data_size);
+                        written_offset += (data_size);
                         written_element += 1;
                         return true;
                     }

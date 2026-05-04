@@ -64,12 +64,12 @@ struct FileBlockWrapper {
      * Reading the next block and clearing the current one.
      * @param fptr File pointer from which read the data
      */
-    void next(FILE* fptr) {
+    void next(FILE* fptr, bool blockHeadIndexer) {
         int bytes = 0;
         clear();
         if ((bytes = fread(buffer, sizeof(char), block_size, fptr)) == block_size) {
             valid = true;
-            _index();
+            _index(blockHeadIndexer);
         } else {
             valid = false;
             clear();
@@ -95,6 +95,15 @@ struct FileBlockWrapper {
         return valid;
     }
 
+    jackbergus::framework::new_delta_data_structure* getNewRecord(uint64_t idx) {
+        auto N = size();
+        if (idx < N) {
+            return (jackbergus::framework::new_delta_data_structure*)(( buffer)+index[idx]);
+        } else {
+            return nullptr;
+        }
+    }
+
     std::pair<jackbergus::framework::BlockHeader*, void*> get(uint64_t idx) const {
         auto N = size();
         if (idx < size()) {
@@ -108,18 +117,26 @@ struct FileBlockWrapper {
 
 
 private:
-    void _index() {
+    void _index(bool blockHeadIndexer) {
         auto N = size();
         if (index.empty()) {
-            jackbergus::framework::BlockHeader* first_header = (jackbergus::framework::BlockHeader*)(((uint64_t *) buffer)+1);
-            for (uint64_t i = 0; i < N; ++i) {
-                ptrdiff_t val = ((char*)first_header)-((char*)buffer);
-                index.emplace_back(val);
-                auto address = ( jackbergus::framework::BlockHeader*)(buffer+val);
-                assert(address == first_header);
-                // double val = *(double*)(((char*)first_header)+sizeof(jackbergus::framework::BlockHeader));
-                // std::cout << val << "@ [" << first_header->start << ", " << first_header->end << "]" << std::endl;
-                first_header = (jackbergus::framework::BlockHeader*)(((char*)first_header)+sizeof(jackbergus::framework::BlockHeader)+first_header->payload_size);
+            if (blockHeadIndexer) {
+                jackbergus::framework::BlockHeader* first_header = (jackbergus::framework::BlockHeader*)(((uint64_t *) buffer)+1);
+                for (uint64_t i = 0; i < N; ++i) {
+                    ptrdiff_t val = ((char*)first_header)-((char*)buffer);
+                    index.emplace_back(val);
+                    auto address = ( jackbergus::framework::BlockHeader*)(buffer+val);
+                    assert(address == first_header);
+                    // double val = *(double*)(((char*)first_header)+sizeof(jackbergus::framework::BlockHeader));
+                    // std::cout << val << "@ [" << first_header->start << ", " << first_header->end << "]" << std::endl;
+                    first_header = (jackbergus::framework::BlockHeader*)(((char*)first_header)+sizeof(jackbergus::framework::BlockHeader)+first_header->payload_size);
+                }
+            } else {
+                jackbergus::framework::new_delta_data_structure* first_header = (jackbergus::framework::new_delta_data_structure*)(((uint64_t *) buffer)+1);
+                for (uint64_t i = 0; i < N; ++i) {
+                    ptrdiff_t val = ((char*)&first_header[i])-((char*)buffer);
+                    index.emplace_back(val);
+                }
             }
         }
     }

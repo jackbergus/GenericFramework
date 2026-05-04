@@ -6,6 +6,9 @@
 
 #include <jackbergus/networking/udp/udp.h>
 
+#include "jackbergus/networking/udp/UDPClient.h"
+#include "jackbergus/networking/udp/UDPServer.h"
+
 enum class signal_test : uint64_t {
   SIGNAL_A = 0,
   SIGNAL_B = 1,

@@ -19,6 +19,14 @@
 // Created by gyankos on 26/03/26.
 //
 
+#define ZMQ_BUILD_DRAFT_API
+#include <zmq.hpp>
+#include <iostream>
+#include <thread>
+#include <chrono>
+#define MCAST_GROUP         ("mcast_test")
+
+#if 0
 
 #if defined(__vxworks)
 #include "vxWorks.h"
@@ -29,6 +37,8 @@
 #include "hostLib.h"
 #include "ioLib.h"
 #include "udpExample.h"
+#elif (defined(WIN32)|defined(_WIN64))
+#include <winsock2.h>
 #else
 #include <bits/stdc++.h>
 #include <unistd.h>
@@ -51,9 +61,12 @@
 static inline int GetWSASocketError(int sockfd)
 {
     int ris, OptVal = 1;
-    printf ("setsockopt()\n");
+    //printf ("setsockopt()\n");
     ris = setsockopt(sockfd, SOL_SOCKET, SO_ERROR, (char *)&OptVal, sizeof(OptVal));
     return(ris);
 }
+#endif
+
+
 
 #endif
