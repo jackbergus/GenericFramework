@@ -39,6 +39,15 @@ struct Final_N {
     uint8_t enumerato;
 };
 
+struct Final_F {
+    Element1_N first;
+    Element2_N second[10];
+    uint32_t third;
+    uint8_t enumerato : 3;
+    uint8_t enumerato2 : 3;
+    uint8_t enumerato3 : 2;
+};
+
 namespace std {
     template<>
     struct numeric_limits<Element1_N> {
@@ -64,11 +73,24 @@ struct numeric_limits<Element2_N> {
     template<>
 struct numeric_limits<Final_N> {
         constexpr static Final_N min() {
-            return {numeric_limits<Element1_N>::min(),0,0};
+            constexpr auto snd = numeric_limits<Element2_N>::min();
+            return {numeric_limits<Element1_N>::min(),{snd,snd,snd,snd,snd,snd,snd,snd,snd,snd},  0,0};
         }
         constexpr static Final_N max() {
             constexpr auto snd = numeric_limits<Element2_N>::max();
             return {numeric_limits<Element1_N>::max(), {snd,snd,snd,snd,snd,snd,snd,snd,snd,snd}, uint32M, uint8M};
+        }
+    };
+
+    template<>
+struct numeric_limits<Final_F> {
+        constexpr static Final_F min() {
+            constexpr auto snd = numeric_limits<Element2_N>::min();
+            return {numeric_limits<Element1_N>::min(),{snd,snd,snd,snd,snd,snd,snd,snd,snd,snd},  0,0, 0, 0};
+        }
+        constexpr static Final_F max() {
+            constexpr auto snd = numeric_limits<Element2_N>::max();
+            return {numeric_limits<Element1_N>::max(), {snd,snd,snd,snd,snd,snd,snd,snd,snd,snd}, uint32M, 7, 7, 3};
         }
     };
 }
@@ -118,6 +140,7 @@ static_assert(sizeof(std::array<Element2_L,10>) == sizeof(Element2_L[10]));
 REFL_AUTO(type(Element1_N), field(val), field(jes), field(cho), field(voi_))
 REFL_AUTO(type(Element2_N), field(cho), field(voi_), field(val))
 REFL_AUTO(type(Final_N), field(first), field(second), field(third), field(enumerato))
+REFL_AUTO(type(Final_F), field(first), field(second), field(third), bitfield(enumerato), bitfield(enumerato2), bitfield(enumerato3))
 REFL_AUTO(type(Element1_L), sfield(val), sfield(jes), sfield(cho), sfield(voi_))
 REFL_AUTO(type(Element2_L), sfield(cho), sfield(voi_), sfield(val))
 REFL_AUTO(type(Final_L), sfield(first), sfield(second), sfield(third), sfield(objectivo))

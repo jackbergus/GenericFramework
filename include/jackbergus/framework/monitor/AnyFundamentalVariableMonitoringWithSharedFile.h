@@ -362,7 +362,7 @@ struct static_forshared {
                                                 std::vector<AnyFundamentalVariableMonitoringWithSharedFile<block_size> >
                                                 &f,
                                                 uint64_t acc = 0) {
-        auto val = get_field_t<T, x>::get(value);
+        auto val = getter<T, x>(value);
         using K = typename refl::trait::get_t<x, refl::member_list<T> >::value_type;
         constexpr auto t_val = getTypeInformation<K>();
         if constexpr (t_val == type_cases::T_STATIC_ARRAY) {

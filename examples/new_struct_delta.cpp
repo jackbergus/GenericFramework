@@ -52,7 +52,7 @@ int main(void) {
             lightweight_any val{valuer};
             out = val;
         }
-        std::cout << *(uint8_t *) out.raw() << std::endl;
+        std::cout << (uint64_t)*(uint8_t *) out.raw() << std::endl;
     }
 
 
@@ -63,7 +63,7 @@ int main(void) {
     {
         FileLogger<> logger_test{binary_file};
 
-        Final_N final_n;
+        Final_F final_n;
         memset(&final_n, 0, sizeof(final_n));
         logger_test.registerObjectWithName("final_n_msg", final_n);
 
@@ -79,7 +79,7 @@ int main(void) {
 
         // From now onwards, simulating some elements being changed
         // Starting with small changes
-        final_n.enumerato = 123; // Valori dal tempo 2
+        final_n.enumerato = 7; // Valori dal tempo 2
         final_n.third = 86; // Valori dal tempo 2
         logger_test.updateStruct("final_n_msg", 2, final_n);
 
@@ -105,10 +105,12 @@ int main(void) {
         final_n.second[6].cho = 13; // Valori dal tempo 6
         logger_test.updateStruct("final_n_msg", 6, final_n);
 
+        final_n.enumerato2 = 3; // Valori dal tempo 2
         final_n.second[7].cho = 19; // Valori dal tempo 7
         logger_test.updateStruct("final_n_msg", 7, final_n);
 
         final_n.first.voi_ = 8; // Valori dal tempo 8
+        final_n.enumerato3 = 1; // Valori dal tempo 2
         logger_test.updateStruct("final_n_msg", 8, final_n);
 
         concurrent.val = 9; // valori dal tempo 9
