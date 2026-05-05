@@ -2,8 +2,8 @@
 // Created by Giacomo Bergami, PhD on 28/04/2026.
 //
 
-#define ZMQ_BUILD_DRAFT_API
-#include <zmq.hpp>
+// #define ZMQ_BUILD_DRAFT_API
+// #include <zmq.hpp>
 #include <iostream>
 #include <thread>
 #include <chrono>
@@ -24,8 +24,9 @@ static inline void sleep(uint64_t secs) {
 
 
 int main(void) {
+    auto ptr = InitNetworking::getInstance();
     std::cout<< "udp2" << std::endl;
-    UDPBiDirectional<udp_example_signals> udp2("127.0.0.1", "127.0.0.1", 40000, 40001, false);
+    UDPBiDirectional<udp_example_signals> udp2("127.0.0.1", "127.0.0.1", 8000, 8001, false);
     sleep(10);
     for (const auto& val : udp2.recv(true)) {
         std::cout << magic_enum::enum_name(val).data() << std::endl;
@@ -35,6 +36,7 @@ int main(void) {
     auto val2 = udp2.send(MONDO);
     auto val3 = udp2.send(CIAO);
     udp2.close();
+    ptr->close();
     return 0;
 
 }

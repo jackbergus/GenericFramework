@@ -32,22 +32,28 @@ template
 class UDPClient {
     std::string server_ip;
     int         server_port;
-    // struct sockaddr_in servaddr;
+#ifndef USE_ZMQ
+    struct sockaddr_in servaddr;
+#endif
     int         rc;
     void *ctx{nullptr};
     void *radio{nullptr};
     std::string mcast_group;
 
-    UDPClient(const std::string& server_ip, int server_port, int socket) : server_ip(server_ip), server_port(server_port), rc(socket) {
-        // memset(&servaddr, 0, sizeof(servaddr));
-        // // Fill server address info
-        // servaddr.sin_family = AF_INET;              // IPv4
-        // servaddr.sin_port   = htons(server_port);          // Server port
-        // servaddr.sin_addr.s_addr = inet_addr(server_ip.c_str()); // Server IP
+    UDPClient(const std::string& server_ip, int server_port) : server_ip(server_ip), server_port(server_port) {
+#ifndef USE_ZMQ
+        rc = socket(AF_INET, SOCK_DGRAM, 0);
+        memset(&servaddr, 0, sizeof(servaddr));
+        // Fill server address info
+        servaddr.sin_family = AF_INET;              // IPv4
+        servaddr.sin_port   = htons(server_port);          // Server port
+        servaddr.sin_addr.s_addr = inet_addr(server_ip.c_str()); // Server IP
+#else
         ctx = zmq_ctx_new();
         radio = zmq_socket(ctx, ZMQ_RADIO);
         mcast_group = "udp://" + server_ip + ":" + std::to_string(server_port);
         rc = zmq_connect(radio, mcast_group.c_str());
+#endif
     }
 
 public:
@@ -59,29 +65,33 @@ public:
 
     // static constexpr uint64_t MAX_VAL = (1 << magic_enum::detail::range_max<signal_type>::value);
     static UDPClient* instance(const std::string& server_ip, int server_port) {
-        // int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
-        // if (sockfd < 0) {
-        //     return nullptr;
-        // }
-        return new UDPClient(server_ip, server_port, 0);
+        if (!InitNetworking::getInstance()->good())
+            return nullptr;
+        return new UDPClient(server_ip, server_port);
     }
 
     bool send_signal(const signal_type& signal) {
+#ifdef USE_ZMQ
         zmq_msg_t msg;
         zmq_msg_init_data (&msg, ( void *)&signal, sizeof(signal), NULL, NULL);
         zmq_msg_set_group(&msg, MCAST_GROUP);
-
-        // printf( "Sending message %d\n", message_num);
         return zmq_sendmsg(radio, &msg, 0) == sizeof(signal);
-        // auto val= (sendto(sockfd, (const char*)&signal, sizeof(signal_type), 0,
-        //        (const struct sockaddr *)&servaddr, sizeof(servaddr)) == sizeof(signal_type));
-        // if (!val) {
-        //     std::cout << strerror(errno) << std::endl;
-        // }
-        // return val;
+#else
+        if (rc < 0) {
+            return false;
+        }
+        // printf( "Sending message %d\n", message_num);
+        auto val= (sendto(rc, (const char*)&signal, sizeof(signal_type), 0,
+               (const struct sockaddr *)&servaddr, sizeof(servaddr)) == sizeof(signal_type));
+        if (!val) {
+            // std::cout << strerror(errno) << std::endl;
+        }
+        return val;
+#endif
     }
 
     void close() {
+#ifdef USE_ZMQ
         if (radio) {
             zmq_close(radio);
             radio = nullptr;
@@ -90,15 +100,17 @@ public:
             zmq_ctx_term(ctx);
             ctx = nullptr;
         }
+#else
         // Close socket
-//         if (sockfd>=0) {
-// #if defined(WIN32)||defined(WIN64)
-//             closesocket(sockfd);
-// #else
-//             ::close(sockfd);
-// #endif
-//             sockfd = -1;
-//         }
+        if (rc>=0) {
+#if defined(WIN32)||defined(WIN64)
+            closesocket(rc);
+#else
+            ::close(rc);
+#endif
+            rc = -1;
+        }
+#endif
     }
 
     ~UDPClient() {

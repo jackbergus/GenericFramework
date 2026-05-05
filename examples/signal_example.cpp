@@ -6,6 +6,7 @@
 
 #include <jackbergus/networking/udp/udp.h>
 
+#include "helpers.h"
 #include "jackbergus/networking/udp/UDPClient.h"
 #include "jackbergus/networking/udp/UDPServer.h"
 
@@ -17,6 +18,7 @@ enum class signal_test : uint64_t {
 
 
 int main(void) {
+  auto ptr = InitNetworking::getInstance();
   UDPServer<signal_test>* st_server = UDPServer<signal_test>::instance("127.0.0.1", 40001, false);
   if (st_server == nullptr) {
     return 1;
@@ -27,11 +29,13 @@ int main(void) {
   }
   st_client->send_signal(signal_test::SIGNAL_A);
   st_client->send_signal(signal_test::SIGNAL_C);
-  sleep(1); // While with raw UDP it was almost immediate, with this we have some kind of delay...
+  MYUSleep(1 * NANOSECONDS_PER_SECOND);  // While with raw UDP it was almost immediate, with this we have some kind of delay...
   while (st_server->recv_signal());
   std::cout << (*st_server)[signal_test::SIGNAL_A] << std::endl;
   std::cout << (*st_server)[signal_test::SIGNAL_B] << std::endl;
   std::cout << (*st_server)[signal_test::SIGNAL_C] << std::endl;
   auto val= st_server->getActiveSignals();
   std::cout << val.size() << std::endl;
+  ptr->close();
+  return 0;
 }

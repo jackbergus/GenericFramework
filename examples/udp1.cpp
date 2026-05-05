@@ -19,7 +19,8 @@ static inline void sleep(uint64_t secs) {
 #endif
 
 int main(void) {
-    UDPBiDirectional<udp_example_signals> udp1("127.0.0.1", "127.0.0.1", 40001, 40000, false);
+    auto ptr = InitNetworking::getInstance();
+    UDPBiDirectional<udp_example_signals> udp1("127.0.0.1", "127.0.0.1", 8001, 8000, false);
     std::cout<< "udp1 sending[HELLO,MONDO x 2]" << std::endl;
     auto val1 = udp1.send(HELLO);
     auto val2 = udp1.send(MONDO);
@@ -29,6 +30,7 @@ int main(void) {
         std::cout << magic_enum::enum_name(val).data() << std::endl;
     }
     udp1.close();
+    ptr->close();
     return 0;
 }
 #else

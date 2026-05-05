@@ -19,6 +19,9 @@
 // Created by gyankos on 26/03/26.
 //
 
+#include <jackbergus/networking/InitNetworking.h>
+
+#ifdef USE_ZMQ
 #define ZMQ_BUILD_DRAFT_API
 #include <zmq.hpp>
 #include <iostream>
@@ -26,7 +29,7 @@
 #include <chrono>
 #define MCAST_GROUP         ("mcast_test")
 
-#if 0
+#else
 
 #if defined(__vxworks)
 #include "vxWorks.h"
@@ -37,6 +40,7 @@
 #include "hostLib.h"
 #include "ioLib.h"
 #include "udpExample.h"
+
 #elif (defined(WIN32)|defined(_WIN64))
 #include <winsock2.h>
 #else
@@ -56,7 +60,6 @@
 
 #define MAXLINE     (1024)
 #define SERVER_PORT (5004)
-
 
 static inline int GetWSASocketError(int sockfd)
 {

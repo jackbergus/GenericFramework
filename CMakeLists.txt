@@ -28,13 +28,18 @@ include_directories(submodules/refl-cpp/include)
 include_directories(submodules/magic_enum/include)
 include_directories(submodules/narcissus/include)
 include_directories(submodules/vxworks_linux/include)
-include_directories(submodules/libzmq/include)
-include_directories(submodules/cppzmq)
 
-add_subdirectory(submodules/libzmq/)
+if (USE_ZMQ)
+    add_definitions(USE_ZMQ)
+    include_directories(submodules/cppzmq)
+    include_directories(submodules/libzmq/include)
+    add_subdirectory(submodules/libzmq/)
+    include_directories(${ZMQ_INCLUDE_DIRS})
+endif ()
+
 add_subdirectory(submodules/vxworks_linux/)
 
-include_directories(${ZMQ_INCLUDE_DIRS})
+
 
 
 add_library(GeneralFramework OBJECT
@@ -74,12 +79,10 @@ add_library(GeneralFramework OBJECT
         include/jackbergus/concurrency/thread_pool/EDF.h
         include/jackbergus/framework/monitor/serializer/binary_to_csv_serializer.h
         src/jackbergus/monitor/serializer/binary_to_csv_serializer.cpp
+        src/jackbergus/networking/InitNetworking.cpp
 )
 #target_link_libraries(GeneralFramework vxworks cpp_vxworks ${LINK_LIBRARY} )
 
-
-add_executable(main examples/example_record_serialization.cpp)
-target_link_libraries(main GeneralFramework ${LINK_LIBRARY} pthread vxworks cpp_vxworks GeneralFramework)
 
 add_executable(simple_double_example examples/simple_double_example.cpp)
 target_link_libraries(simple_double_example GeneralFramework ${LINK_LIBRARY} pthread vxworks cpp_vxworks GeneralFramework)
@@ -88,13 +91,24 @@ add_executable(example_for_record_updates examples/example_for_record_updates.cp
         include/jackbergus/data/UpdatableElement.h)
 target_link_libraries(example_for_record_updates GeneralFramework ${LINK_LIBRARY} pthread vxworks cpp_vxworks GeneralFramework)
 
-add_executable(example_record_serialization examples/example_record_serialization.cpp)
-target_link_libraries(example_record_serialization GeneralFramework ${LINK_LIBRARY} pthread vxworks cpp_vxworks GeneralFramework)
 
 add_executable(example_new_refl examples/example_new_refl.cpp)
 
+if (USE_ZMQ)
 add_executable(signal_example examples/signal_example.cpp)
 target_link_libraries(signal_example ${LINK_LIBRARY} pthread libzmq-static vxworks cpp_vxworks GeneralFramework)
+add_executable(udp1 examples/udp1.cpp)
+target_link_libraries(udp1 ${LINK_LIBRARY} pthread libzmq-static vxworks cpp_vxworks GeneralFramework )
+add_executable(udp2 examples/udp2.cpp)
+target_link_libraries(udp2 ${LINK_LIBRARY} pthread libzmq-static vxworks cpp_vxworks GeneralFramework)
+else ()
+    add_executable(signal_example examples/signal_example.cpp)
+    target_link_libraries(signal_example ${LINK_LIBRARY} pthread vxworks cpp_vxworks GeneralFramework)
+    add_executable(udp1 examples/udp1.cpp)
+    target_link_libraries(udp1 ${LINK_LIBRARY} pthread  vxworks cpp_vxworks GeneralFramework )
+    add_executable(udp2 examples/udp2.cpp)
+    target_link_libraries(udp2 ${LINK_LIBRARY} pthread vxworks cpp_vxworks GeneralFramework)
+endif ()
 
 add_executable(test_triple_buffer examples/test_triple_buffer.cpp)
 target_link_libraries(test_triple_buffer ${LINK_LIBRARY} pthread vxworks cpp_vxworks GeneralFramework)
@@ -107,13 +121,8 @@ add_executable(example_EDF_sched examples/example_EDF_sched.cpp
         include/jackbergus/networking/udp/UDPBiDirectional.h)
 target_link_libraries(example_EDF_sched  ${LINK_LIBRARY} pthread vxworks cpp_vxworks GeneralFramework)
 
-add_executable(example_for_nested_record examples/example_for_nested_record.cpp)
-target_link_libraries(example_for_nested_record  ${LINK_LIBRARY} pthread vxworks cpp_vxworks GeneralFramework)
 
-add_executable(udp1 examples/udp1.cpp)
-target_link_libraries(udp1 ${LINK_LIBRARY} pthread libzmq-static vxworks cpp_vxworks GeneralFramework )
-add_executable(udp2 examples/udp2.cpp)
-target_link_libraries(udp2 ${LINK_LIBRARY} pthread libzmq-static vxworks cpp_vxworks GeneralFramework)
+
 
 add_executable(new_struct_delta examples/new_struct_delta.cpp)
 target_link_libraries(new_struct_delta GeneralFramework ${LINK_LIBRARY} pthread vxworks cpp_vxworks GeneralFramework)
