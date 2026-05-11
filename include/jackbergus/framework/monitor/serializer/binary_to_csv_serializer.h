@@ -35,4 +35,18 @@ void convert_binary_to_csv(const std::string &binary_file,
                            const std::string &final_csv_file,
                            std::vector<std::string> &admissible_headers_for_serialization);
 
+/**
+ *
+ * Differently from the convert_binary_to_csv method, this does not assume that all the records within the binary_file are sorted by
+ * timestamp, and therefore provides a preliminary secondary memory sort on all the data on the binary file by performing an external
+ * merge sort, for then converting the data into CSV as per the previous method
+ *
+ * @param binary_file Single binary file containing the information pertaining to all the structures. This shall have an associated .yaml file, which provides additional information (e.g.) for enumerated data structures
+ * @param final_csv_file Target file where this one shall be written
+ * @param admissible_headers_for_serialization  Which relevant headers are of interest to be written in the final file
+ */
+void sort_and_convert_binary_to_csv(const std::string &binary_file,
+                           const std::string &final_csv_file,
+                           std::vector<std::string> &admissible_headers_for_serialization);
+
 #endif //GENERALFRAMEWORK_BINARY_TO_CSV_SERIALIZER_H
