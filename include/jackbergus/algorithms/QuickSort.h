@@ -34,7 +34,7 @@ static inline uint64_t Partition(std::vector<T>& vec, uint64_t lo, uint64_t hi, 
     auto pivot = f(vec[hi]);
     uint64_t i = lo;
     for (uint64_t j = lo; j<hi; j++) {
-        if ((f(vec[j]) < pivot) || (std::abs(f(vec[j]) - pivot)<=std::numeric_limits<comp>::epsilon())) {
+        if ((f(vec[j]) <= pivot) /*|| (std::abs(f(vec[j]) - pivot)<=std::numeric_limits<comp>::epsilon())*/) {
             std::swap(vec[i],vec[j]);
             i++;
         }
