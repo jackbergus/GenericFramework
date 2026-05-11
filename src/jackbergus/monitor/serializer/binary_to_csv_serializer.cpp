@@ -28,6 +28,15 @@
 #include <jackbergus/framework/monitor/deserializer/FieldGetting.h>
 #include <jackbergus/framework/ndp/FileBlockReader.h>
 
+void sort_and_convert_binary_to_csv(const std::string &binary_file,
+                                    const std::string &final_csv_file,
+                                    std::vector<std::string> &admissible_headers_for_serialization) {
+    {
+        ExternalMergeSort<> test(binary_file);
+        test.start()   ;
+    }
+    convert_binary_to_csv(binary_file, final_csv_file, admissible_headers_for_serialization);
+}
 
 void convert_binary_to_csv(const std::string &binary_file,
                            const std::string &final_csv_file,
