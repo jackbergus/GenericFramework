@@ -121,8 +121,8 @@ add_executable(example_EDF_sched examples/example_EDF_sched.cpp
         include/jackbergus/networking/udp/UDPBiDirectional.h)
 target_link_libraries(example_EDF_sched  ${LINK_LIBRARY} pthread vxworks cpp_vxworks GeneralFramework)
 
-
-
-
 add_executable(new_struct_delta examples/new_struct_delta.cpp)
 target_link_libraries(new_struct_delta GeneralFramework ${LINK_LIBRARY} pthread vxworks cpp_vxworks GeneralFramework)
+
+add_executable(new_external_mergesort_variant examples/new_external_mergesort_variant.cpp)
+target_link_libraries(new_external_mergesort_variant  ${LINK_LIBRARY} pthread vxworks cpp_vxworks GeneralFramework)
