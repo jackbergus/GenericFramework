@@ -206,7 +206,7 @@ struct ExternalMergeSort {
                 while (!minheap.empty()) {
                     const struct MinHeapIovec& x = minheap.top();
                     uint64_t idx = x.filename_idx;
-                    std::cout << " SERIALIZE: " << magic_enum::enum_name(x.data.actual_type).data() << " for " << (uint64_t)x.data.structure_id << " of " << (uint64_t)x.data.unnested_field_id << " @ " << x.data.timestamp << std::endl;
+                    //std::cout << " SERIALIZE: " << magic_enum::enum_name(x.data.actual_type).data() << " for " << (uint64_t)x.data.structure_id << " of " << (uint64_t)x.data.unnested_field_id << " @ " << x.data.timestamp << std::endl;
                     file.write((void*)(&x.data), sizeof(x.data));
 
                     if (ptrs[idx] != ends[idx]) {
@@ -223,7 +223,7 @@ struct ExternalMergeSort {
                     } else {
                         opened_files.close(serialized_vector[idx].c_str());
                         std::remove(serialized_vector[idx].c_str());
-                        std::cout << "Closing "<< serialized_vector[idx] << " @" << idx << std::endl;
+                        //std::cout << "Closing "<< serialized_vector[idx] << " @" << idx << std::endl;
                     }
                 }
             }
