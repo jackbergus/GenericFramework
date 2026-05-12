@@ -128,7 +128,7 @@ public:
     if (rc < 0) {
       return false;
     }
-    int len;
+    socklen_t len;
     int n;
     len = sizeof(cliaddr);  //len is value/result
     signal_type result;

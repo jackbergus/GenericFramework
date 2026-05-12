@@ -45,6 +45,12 @@ namespace jackbergus {
             static_assert(sizeof(type_cases) <= sizeof(uint8_t) && std::is_same_v<magic_enum::underlying_type_t<type_cases>, uint8_t>, "type_cases used for representing the type to be serialize should be within the uint8_t range");
             static_assert(std::numeric_limits<uint8_t>::max() >= sizeof(uint64_t), "This works under the assumption that I am representing native types being at most 64 bit long. Thus, I can fit this description within a 64 bit element");
 
+	   static new_delta_data_structure newTimestampRecord(double timestamp) {
+	   new_delta_data_structure result;
+	   result.timestamp = timestamp;
+	   return result;
+	   }
+
             void setCRC() {
                 CRC = *((uint64_t*)((double*)&timestamp)) ^ actual_data;
             }

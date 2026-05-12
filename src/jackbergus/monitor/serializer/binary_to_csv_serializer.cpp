@@ -24,6 +24,7 @@
 #include <fstream>
 #include <map>
 #include <unordered_map>
+#include <jackbergus/algorithms/ExternalMergeSort.h>
 #include <jackbergus/framework/monitor/serializer/binary_to_csv_serializer.h>
 #include <jackbergus/framework/monitor/deserializer/FieldGetting.h>
 #include <jackbergus/framework/ndp/FileBlockReader.h>
