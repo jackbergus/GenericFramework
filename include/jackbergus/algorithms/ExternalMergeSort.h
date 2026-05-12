@@ -180,7 +180,9 @@ struct ExternalMergeSort {
         }
         if (counting > 0) {
             QuickSort<jackbergus::framework::new_delta_data_structure, std::tuple<double, uint8_t, uint8_t>>(tmp_data, F);
-            auto new_file = p / (std::to_string(number_of_serialized_files)+".frag");
+            
+            if (number_of_serialized_files> 0) {
+                        auto new_file = p / (std::to_string(number_of_serialized_files)+".frag");
             {
                 std::ofstream file{new_file, std::ios_base::binary | std::ios_base::out};
                 for (const auto& ref : tmp_data) {
@@ -194,7 +196,20 @@ struct ExternalMergeSort {
             tmp_data.clear();
             number_of_serialized_files++;
             counting = 0;
+            } else {
+            	// If I was able to sort this entire file in primary memory and to re-sort it back in a serialized way, then 
+            	fbr.close();
+            	jackbergus::framework::FileSerializer<> file{binary_file};
+            	for (const auto& data : tmp_data)
+            		file.write((void*)(&data), sizeof(data));
+            	file.flush();
+            	file.close();
+            	counting = tmp_data.size();
+            	number_of_serialized_files = 1;
+            	return; // Quitting, as I have already written everything, forsooth!
+            }
         }
+
 
         std::string bin_sorted = binary_file+".sorted";
         {
