@@ -156,6 +156,7 @@ void convert_binary_to_csv(const std::string &binary_file,
     while (fbr.read(buffer, false)) {
         for (uint64_t i = 0, N = buffer.size(); i < N; i++) {
             auto ptr = buffer.getNewRecord(i);
+            std::cout << ptr->timestamp << std::endl;
             if (ptr->timestamp != currentTime) {
                 // Actual syntactical equivalence. This is the same value that I got from the file. Thus, I am not requiring to have epsilon equivalence, forsooth!
                 for (uint64_t col_offset = 0, M = previous_string_values.size(); col_offset < M; col_offset++) {
@@ -182,16 +183,16 @@ void convert_binary_to_csv(const std::string &binary_file,
             binary_coordinates.first = ptr->structure_id;
             binary_coordinates.second = ptr->unnested_field_id;
             const auto &structure = yaml_result.at(ptr->structure_id);
-
+            if (ptr->is_starting_of_structure)
+                is_record_fully_serialized_at_current_time[binary_coordinates.first].first = true;
+            if (ptr->is_end_of_structure)
+                is_record_fully_serialized_at_current_time[binary_coordinates.first].second = true;
             auto it = binary_pair_info_to_admissible_headers_for_serialization_offset.find(binary_coordinates);
 
             if (it == binary_pair_info_to_admissible_headers_for_serialization_offset.end()) {
                 continue; // That is, this value is not registered to be serialized in the final csv file
             }
-            if (ptr->is_starting_of_structure)
-                is_record_fully_serialized_at_current_time[binary_coordinates.first].first = true;
-            if (ptr->is_end_of_structure)
-                is_record_fully_serialized_at_current_time[binary_coordinates.first].second = true;
+
             const auto info = &structure.fields.at(ptr->unnested_field_id);
             std::string &previous_string_value = previous_string_values[it->second];
             // Getting the previous value that was set for this. And, according to this, printing the cell value and storing this into a vector of string for persistency, and for linearizing the write once a new timestamp occurs

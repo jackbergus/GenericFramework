@@ -120,7 +120,7 @@ int main(void) {
         logger_test.close();
     }
 
-    std::string final_csv_file = "final_csv_file_v2.csv";
+    std::string final_csv_file = "final_csv_file_v4.csv";
     std::vector<std::string> admissible_headers_for_serialization{
         "concurrent.t",
         "concurrent.val", "concurrent.timestamp", "final_n_msg.enumerato", "final_n_msg.third", "final_n_msg.first.cho",
@@ -129,9 +129,9 @@ int main(void) {
     };
 
     // Testing serializing everything
-    admissible_headers_for_serialization.clear();
+    // admissible_headers_for_serialization.clear();
 
-    convert_binary_to_csv(binary_file, final_csv_file, admissible_headers_for_serialization);
+    sort_and_convert_binary_to_csv(binary_file, final_csv_file, admissible_headers_for_serialization);
     std::remove(binary_file.c_str());
     std::remove(yaml_file.c_str());
 }

@@ -22,6 +22,7 @@ struct SpecificStructureSerialization {
     uint64_t struct_size;
     std::vector<unsigned char> fields_bearing;
     arbitrary_bitset bsw;
+    IntervalTree<uint64_t, uint64_t> interval_of_offsets;
 
     SpecificStructureSerialization() : object_name(""), type_index(std::type_index(typeid(void))), fields{},
                                        struct_idx{std::numeric_limits<uint64_t>::max()} {
@@ -36,12 +37,30 @@ struct SpecificStructureSerialization {
         type_index = (std::type_index(typeid(T)));
         this->struct_idx = struct_idx;
         fields = getNativeType2<T>(fileptr, 0, this->struct_idx);
-        updateValue(0, initial_value_expected, true);
+        {
+            std::vector<uint64_t> to_persist_fields;
+            to_persist_fields.reserve(fields.size());
+            static_forshared<T, 0, refl::member_list<T>::size>::setRecursivelyWithTemplates(
+                to_persist_fields, 0.0, initial_value_expected, fields, 0);
+            if (!to_persist_fields.empty()) {
+                auto min = *to_persist_fields.begin();
+                auto max = *to_persist_fields.rbegin();
+                for (const auto &idx: to_persist_fields) {
+                    fields[idx].flush(min, max, false, true);
+                }
+            }
+        }
         struct_size = sizeof(T);
         fields_bearing.resize(struct_size, 0);
         std::memcpy(fields_bearing.data(), &initial_value_expected, sizeof(T));
-        arbitrary_bitset t((unsigned char*)fields_bearing.data(), sizeof(T));
-
+        arbitrary_bitset t((unsigned char*)fields_bearing.data(), sizeof(T)*8);
+        bsw = t;
+        for (uint64_t idx = 0, N = fields.size(); idx < N; idx++) {
+            const auto& field = fields[idx];
+            // std::cout << "[" << field.bitOffset() << ", " << field.bitOffset()+field.bitSize()-1 << "] for " << field.field_name() <<  std::endl;
+            interval_of_offsets.insertInterval({field.bitOffset(), field.bitOffset()+field.bitSize()-1, idx});
+            //debug_fieldname_to_vectoroffset[field.field_name()] = idx;
+        }
     }
 
     void finaliseWrite() {
@@ -70,7 +89,26 @@ struct SpecificStructureSerialization {
             }
 #else
 #endif
-
+            arbitrary_bitset wrapper2((unsigned char*)&value, sizeof(T)*8);
+            std::cout<< bsw.toString() << std::endl;
+            std::cout << wrapper2.toString() << std::endl;
+            std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+            auto differences = bsw.deltaFromIntervalTreeSlot(interval_of_offsets, wrapper2);
+            auto min = *differences.begin();
+            auto max = *differences.rbegin();
+            for (const auto idx : differences) {
+                auto& field = fields[idx];
+                const auto& s = field.getStack();
+                lightweight_any finale_wrapped{&value};
+                for (auto it = s.rbegin(); it != s.rend(); it++) {
+                    finale_wrapped = (*it)(finale_wrapped);
+                }
+                field.printNative(std::cout, finale_wrapped) << " is the value changed for: " << field.field_name() << std::endl;
+                field.updateValue(curr_t, finale_wrapped, idx);
+                field.flush(min, max, false, firstWrite);
+            }
+            std::memcpy(fields_bearing.data(), &value, sizeof(T));
+            // bsw = wrapper2;
             return true;
         } else {
             return false;

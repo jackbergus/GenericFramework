@@ -26,11 +26,11 @@ constexpr auto uint8M = std::numeric_limits<uint8_t>::max();
 constexpr auto int16M = std::numeric_limits<int16_t>::max();
 
 struct InnerNestingLevel {
-    int16_t ripping : 3;
-    int16_t val1 : 1;
-    int16_t val2 : 3;
-    int16_t val3 : 5;
-    int16_t filling: 4;
+    uint16_t ripping : 3;
+    uint16_t val1 : 1;
+    uint16_t val2 : 3;
+    uint16_t val3 : 5;
+    uint16_t filling: 4;
 } __attribute__((packed));
 static_assert(sizeof(InnerNestingLevel) == 2);
 
