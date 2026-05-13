@@ -156,7 +156,7 @@ void convert_binary_to_csv(const std::string &binary_file,
     while (fbr.read(buffer, false)) {
         for (uint64_t i = 0, N = buffer.size(); i < N; i++) {
             auto ptr = buffer.getNewRecord(i);
-            std::cout << ptr->timestamp << std::endl;
+            // std::cout << ptr->timestamp << std::endl;
             if (ptr->timestamp != currentTime) {
                 // Actual syntactical equivalence. This is the same value that I got from the file. Thus, I am not requiring to have epsilon equivalence, forsooth!
                 for (uint64_t col_offset = 0, M = previous_string_values.size(); col_offset < M; col_offset++) {

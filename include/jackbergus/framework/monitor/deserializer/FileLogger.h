@@ -90,9 +90,9 @@ struct SpecificStructureSerialization {
 #else
 #endif
             arbitrary_bitset wrapper2((unsigned char*)&value, sizeof(T)*8);
-            std::cout<< bsw.toString() << std::endl;
-            std::cout << wrapper2.toString() << std::endl;
-            std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+            // std::cout<< bsw.toString() << std::endl;
+            // std::cout << wrapper2.toString() << std::endl;
+            // std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
             auto differences = bsw.deltaFromIntervalTreeSlot(interval_of_offsets, wrapper2);
             auto min = *differences.begin();
             auto max = *differences.rbegin();
@@ -103,7 +103,7 @@ struct SpecificStructureSerialization {
                 for (auto it = s.rbegin(); it != s.rend(); it++) {
                     finale_wrapped = (*it)(finale_wrapped);
                 }
-                field.printNative(std::cout, finale_wrapped) << " is the value changed for: " << field.field_name() << std::endl;
+                // field.printNative(std::cout, finale_wrapped) << " is the value changed for: " << field.field_name() << std::endl;
                 field.updateValue(curr_t, finale_wrapped, idx);
                 field.flush(min, max, false, firstWrite);
             }
