@@ -90,7 +90,7 @@ int main() {
     std::cout << wrapper1.toString() << std::endl;
 
     std::cout << sizeof(Element1_N) + sizeof(Element2_L)*10 << std::endl;
-    std::unordered_map<std::string, uint64_t> debug_fieldname_to_vectoroffset;
+    //std::unordered_map<std::string, uint64_t> debug_fieldname_to_vectoroffset;
     memcpy(&elementi_2, &final_n, sizeof(Final_F));
     elementi_2.enumerato3 = 1; // Valori dal tempo 2
     elementi_2.second[7].cho = 19; // Valori dal tempo 7
@@ -101,7 +101,6 @@ int main() {
     elementi_2.second[3].val[0].val2 = 1;
     elementi_2.second[3].val[0].ripping = 1;
     elementi_2.first.voi_ = 8; // Valori dal tempo 8
-
     elementi_2.second[3].val[1].val3 = 6;
     elementi_2.second[3].val[2].val2 = 2;
 
@@ -115,39 +114,46 @@ int main() {
         const auto& field = fields[idx];
         std::cout << "[" << field.bitOffset() << ", " << field.bitOffset()+field.bitSize()-1 << "] for " << field.field_name() <<  std::endl;
         interval_of_offsets.insertInterval({field.bitOffset(), field.bitOffset()+field.bitSize()-1, idx});
-        debug_fieldname_to_vectoroffset[field.field_name()] = idx;
+        //debug_fieldname_to_vectoroffset[field.field_name()] = idx;
     }
 
     std::vector<stack_function> stacks;
-    lightweight_any finale_wrapped{&elementi_2};
-    stacks.emplace_back([](auto finale_wrapped) {
-        auto ptr1 = (Final_F*)finale_wrapped.raw();
-        auto& ref_field2 = *ptr1.*(refl::trait::get_t<1, refl::member_list<Final_F>>::pointer);
-        lightweight_any field_access1{&ref_field2[3]};
-        return field_access1;
-    });
-    stacks.emplace_back([](auto field_access1) {
-        auto ptr2 = (Element2_N*)field_access1.raw();
-        auto& ref_field3 = *ptr2.*(refl::trait::get_t<2, refl::member_list<Element2_N>>::pointer);
-        lightweight_any field_access2{&ref_field3[2]};
-        return field_access2;
-    });
-    stacks.emplace_back([](auto field_access2) {
-        auto ref_field3 = getter<InnerNestingLevel, 2>(*(InnerNestingLevel*)field_access2.raw());
-        return lightweight_any{ref_field3};
-    });
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // Basically, getNativeType2 operates like such:
+    // -- At each iteration, we insert an element of the stack like such, that allows to navigate the structure from the beginning of it
+    // -- As a consequence, we have that we can navigate from the root object towards the field, by only knowin which bit
+    // -- within the data structure was modified and, therefore, which inner field was changed
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
-
-    auto it = debug_fieldname_to_vectoroffset.find("second[3].val[1].val3");
-    if (it != debug_fieldname_to_vectoroffset.end()) {
-        auto& field = fields[it->second];
+    auto differences = wrapper1.deltaFromIntervalTreeSlot(interval_of_offsets, wrapper2);
+    std::cout << "We found #" << differences.size() << " changes, which consist of the following: "  << std::endl;
+    for (const auto& idx : differences) {
+        lightweight_any finale_wrapped{&elementi_2};
+        auto& field = fields[idx];
         const auto& s = field.getStack();
         for (auto it = s.rbegin(); it != s.rend(); it++) {
             finale_wrapped = (*it)(finale_wrapped);
         }
-        auto val = *(refl::trait::get_t<2, refl::member_list<InnerNestingLevel>>::value_type*)finale_wrapped.raw();
-        std::cout << val << std::endl;
+
+        std::cout << field.field_name() << ": changed as ";
+        field.printNative(std::cout, finale_wrapped) << std::endl;
     }
+
+    // stacks.emplace_back([](auto finale_wrapped) {
+    //     auto ptr1 = (Final_F*)finale_wrapped.raw();
+    //     auto& ref_field2 = *ptr1.*(refl::trait::get_t<1, refl::member_list<Final_F>>::pointer);
+    //     lightweight_any field_access1{&ref_field2[3]};
+    //     return field_access1;
+    // });
+    // stacks.emplace_back([](auto field_access1) {
+    //     auto ptr2 = (Element2_N*)field_access1.raw();
+    //     auto& ref_field3 = *ptr2.*(refl::trait::get_t<2, refl::member_list<Element2_N>>::pointer);
+    //     lightweight_any field_access2{&ref_field3[2]};
+    //     return field_access2;
+    // });
+    // stacks.emplace_back([](auto field_access2) {
+    //     auto ref_field3 = getter<InnerNestingLevel, 2>(*(InnerNestingLevel*)field_access2.raw());
+    //     return lightweight_any{ref_field3};
+    // });
 
 }

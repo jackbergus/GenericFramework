@@ -113,6 +113,83 @@ public:
         }
     }
 
+    std::ostream& printNative(std::ostream& f, const lightweight_any & finale_wrapped) {
+        switch (type_info.casusu) {
+            case T_VOID:
+                return f << "void";
+
+            case T_NULLPTR:
+                return f << "nullptr";
+
+            case T_SIGNED_INTEGRAL:
+                if (type_info.sizeof_ == 1) {
+                    return f << (int64_t)*((int8_t*)finale_wrapped.raw());
+                } else if (type_info.sizeof_ == 2) {
+                    return f << (int64_t)*((int16_t*)finale_wrapped.raw());
+                } else if (type_info.sizeof_ == 4) {
+                    return f << (int64_t)*((int32_t*)finale_wrapped.raw());
+                } else if (type_info.sizeof_ == 8) {
+                    return f << (int64_t)*((int64_t*)finale_wrapped.raw());
+                } else
+                    return f << "??si";
+
+            case T_U_INTEGRAL:
+                if (type_info.sizeof_ == 1) {
+                    return f << (uint64_t)*((uint8_t*)finale_wrapped.raw());
+                } else if (type_info.sizeof_ == 2) {
+                    return f << (uint64_t)*((uint16_t*)finale_wrapped.raw());
+                } else if (type_info.sizeof_ == 4) {
+                    return f << (uint64_t)*((uint32_t*)finale_wrapped.raw());
+                } else if (type_info.sizeof_ == 8) {
+                    return f << (uint64_t)*((uint64_t*)finale_wrapped.raw());
+                } else
+                    return f << "??ui";
+                break;
+            case T_SIGNED_FLOAT:
+            case T_U_FLOAT:
+                if (type_info.sizeof_ == sizeof(float)) {
+                    return f << *((float*)finale_wrapped.raw());
+                } else if (type_info.sizeof_ == sizeof(double)) {
+                    return f << *((double*)finale_wrapped.raw());
+                } else
+                    return f << "??f";
+
+            case T_STATIC_ARRAY:
+                return f << "array?";
+
+            case T_OTHER_ARRAY:
+                return f << "oth_array?";
+
+            case T_ENUM:
+                return f << *(uint64_t*)finale_wrapped.raw();
+
+            case T_UNION:
+                return f << "union?";
+
+            case T_CLASS:
+                return f << "clz?";
+
+            case T_FUNCTION:
+                return f << "fun?";
+
+            case T_POINTER:
+                return f << "ptr?";
+
+            case T_STRING:
+                return f << "str?";
+
+            case T_TUPLE:
+                return f << "prod?";
+
+            case T_VARIANT:
+                return f << "union?";
+
+            case T_UNEXPECTED:
+                return f << "wtf?";
+
+        }
+    }
+
     AnyFundamentalVariableMonitoringWithSharedFile
     (std::shared_ptr<jackbergus::framework::FileSerializer<block_size> > &file_serialized,
      uint64_t struct_idx,
