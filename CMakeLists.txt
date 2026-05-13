@@ -126,3 +126,6 @@ target_link_libraries(new_struct_delta GeneralFramework ${LINK_LIBRARY} pthread 
 
 add_executable(new_external_mergesort_variant examples/new_external_mergesort_variant.cpp)
 target_link_libraries(new_external_mergesort_variant  ${LINK_LIBRARY} pthread vxworks cpp_vxworks GeneralFramework)
+
+add_executable(new_struct_delta2 examples/new_struct_delta2.cpp)
+target_link_libraries(new_struct_delta2 GeneralFramework ${LINK_LIBRARY} pthread vxworks cpp_vxworks GeneralFramework)

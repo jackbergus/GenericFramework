@@ -15,32 +15,33 @@ namespace interval_tree {
 #endif
 // Structure to represent an interval
 
-template<typename T = double>
+template<typename T = double, typename V = uint64_t>
 struct Interval {
     T low, high;
+    V value;
 
-    Interval(const T& low, const T& high) : low(std::min(low, high)),
-    high(std::max(low, high)) {}
+    Interval(const T& low, const T& high, const V& value = V{0}) : low(std::min(low, high)),
+    high(std::max(low, high)), value{value} {}
 
     friend std::ostream & operator<<(std::ostream &os, const Interval &obj) {
-        return os
-               << "[" << obj.low
+        return os << obj.value <<
+                " @[" << obj.low
                << ", " << obj.high<< "]";
     }
 };
 
 // Structure to represent a node in Interval Search Tree
-template<typename T = double>
+template<typename T = double, typename V = uint64_t>
 struct Node {
-    Interval<T> *i;
+    Interval<T, V> *i;
     T max;
     Node *left, *right;
 };
 
 // A utility function to create a new Interval Search Tree Node
-template<typename T = double>
-Node<T> * newNode(const Interval<T>& i) {
-    Node<T> *temp = new Node<T>();
+template<typename T = double, typename V = uint64_t>
+Node<T> * newNode(const Interval<T, V>& i) {
+    Node<T, V> *temp = new Node<T>();
     temp->i = new Interval(i);
     temp->max = i.high;
     temp->left = temp->right = nullptr;
@@ -48,11 +49,11 @@ Node<T> * newNode(const Interval<T>& i) {
 };
 
 
-    template<typename T = double>
-Node<T> *insertNode(Node<T> **root, const Interval<T>& i) {
+    template<typename T = double, typename V = uint64_t>
+Node<T, V> *insertNode(Node<T, V> **root, const Interval<T, V>& i) {
         if ((!root))
             return nullptr;
-        Node<T> * insertedNode = nullptr;
+        Node<T, V> * insertedNode = nullptr;
         if (root) {
             // Base case: Tree is empty, new node becomes root
             if (*root == nullptr) {
@@ -85,8 +86,8 @@ Node<T> *insertNode(Node<T> **root, const Interval<T>& i) {
 // A utility function to insert a new Interval Search Tree Node
 // This is similar to BST Insert.  Here the low value of interval
 // is used tomaintain BST property
-    template<typename T = double>
-Node<T> *insert(Node<T> *root, const Interval<T>& i) {
+    template<typename T = double, typename V = uint64_t>
+Node<T, V> *insert(Node<T, V> *root, const Interval<T, V>& i) {
 
     // Base case: Tree is empty, new node becomes root
     if (root == nullptr)
@@ -112,8 +113,8 @@ Node<T> *insert(Node<T> *root, const Interval<T>& i) {
 }
 
 // A utility function to check if given two intervals overlap
-    template<typename T = double>
-    bool isOverlapping(const Interval<T>& i1, const Interval<T>& i2) {
+    template<typename T = double, typename V = uint64_t>
+    bool isOverlapping(const Interval<T, V>& i1, const Interval<T, V>& i2) {
     if (i1.low <= i2.high && i2.low <= i1.high)
         return true;
     return false;
@@ -121,8 +122,8 @@ Node<T> *insert(Node<T> *root, const Interval<T>& i) {
 
 // The main function that searches a given
 // interval i in a given Interval Tree.
-    template<typename T = double>
-    Interval<T> *overlapSearch(Node<T> *root, const Interval<T>& i) {
+    template<typename T = double, typename V = uint64_t>
+    Interval<T, V> *overlapSearch(Node<T, V> *root, const Interval<T, V>& i) {
 
     // Base Case, tree is empty
     if (root == nullptr) return nullptr;
@@ -141,8 +142,8 @@ Node<T> *insert(Node<T> *root, const Interval<T>& i) {
     return overlapSearch(root->right, i);
 }
 
-    template<typename T = double>
-    void inorder(Node<T> *root, const std::function<void(Node<T>*)>& callback) {
+    template<typename T = double, typename V = uint64_t>
+    void inorder(Node<T, V> *root, const std::function<void(Node<T, V>*)>& callback) {
         if (root == nullptr)
             return;
         if (root->left)
@@ -153,7 +154,7 @@ Node<T> *insert(Node<T> *root, const Interval<T>& i) {
         callback(root);
     }
 
-    template<typename T = double>
+    template<typename T = double, typename V = uint64_t>
 struct IntervalTree {
     IntervalTree() {
 
@@ -163,16 +164,16 @@ struct IntervalTree {
     IntervalTree& operator=(const IntervalTree&) = delete;
     IntervalTree& operator=(IntervalTree&&) = delete;
 
-    Node<T>* insertInterval(Interval<T> i) {
+    Node<T, V>* insertInterval(const Interval<T, V>& i) {
         return insertNode(&root, i);
     }
 
-    Interval<T> *lookup(Interval<T> i) {
+    Interval<T, V> *lookup(const Interval<T, V>& i) const {
         return overlapSearch(root, i);
     }
 
     void clear() {
-        std::function<void(Node<T>*)> clear = [](Node<T>* ptr) { delete ptr; };
+        std::function<void(Node<T, V>*)> clear = [](Node<T, V>* ptr) { delete ptr; };
         inorder(root, clear);
         root = nullptr;
     }

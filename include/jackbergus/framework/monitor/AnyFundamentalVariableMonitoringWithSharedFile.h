@@ -47,10 +47,26 @@ class AnyFundamentalVariableMonitoringWithSharedFile {
     uint64_t struct_idx, field_idx;
     std::optional<jackbergus::framework::new_delta_data_structure> buffer;
     std::weak_ptr<jackbergus::framework::FileSerializer<block_size> > file_serialized;
+    bool is_bitfield_;
+    uint64_t bit_offset_;
+    uint64_t bit_size_;
     static_assert(sizeof(jackbergus::framework::new_delta_data_structure) + 1 < block_size,
                   "new_delta_data_structure size mismatch");
 
 public:
+
+    bool isBitfield() const {
+        return is_bitfield_;
+    }
+
+    uint64_t bitOffset() const {
+        return bit_offset_;
+    }
+
+    uint64_t bitSize() const {
+        return bit_size_;
+    }
+
     void flush(uint64_t min_idx,
                uint64_t max_id,
                bool lastWrite = false,
@@ -91,10 +107,15 @@ public:
     (std::shared_ptr<jackbergus::framework::FileSerializer<block_size> > &file_serialized,
      uint64_t struct_idx,
      jackbergus::framework::FinestScaleTimeRepresentation start_time,
-     jackbergus::framework::NativeTypeMonitoring &&type) : start_time(start_time), type_info{std::move(type)},
+     jackbergus::framework::NativeTypeMonitoring &&type,
+     bool is_bitfield,
+     uint64_t bit_offset,
+     uint64_t bit_size) : start_time(start_time), type_info{std::move(type)},
                                                            end_time_inclusive(start_time), is_value_valid(false),
                                                            file_serialized{file_serialized}, struct_idx{struct_idx},
-                                                           field_idx{std::numeric_limits<uint64_t>::max()} {
+                                                           field_idx{std::numeric_limits<uint64_t>::max()},
+                                                           is_bitfield_(is_bitfield), bit_offset_(bit_offset),
+                                                           bit_size_(bit_size) {
     }
 
     AnyFundamentalVariableMonitoringWithSharedFile
@@ -102,9 +123,14 @@ public:
      uint64_t struct_idx,
      jackbergus::framework::FinestScaleTimeRepresentation start_time,
      jackbergus::framework::NativeTypeMonitoring &&type,
-     const lightweight_any &value) : type_info{std::move(type)}, start_time(start_time), end_time_inclusive(start_time),
+     const lightweight_any &value,
+     bool is_bitfield,
+     uint64_t bit_offset,
+     uint64_t bit_size) : type_info{std::move(type)}, start_time(start_time), end_time_inclusive(start_time),
                                      current_value(value), is_value_valid(true), file_serialized{file_serialized},
-                                     struct_idx{struct_idx}, field_idx{std::numeric_limits<uint64_t>::max()} {
+    struct_idx{struct_idx}, field_idx{std::numeric_limits<uint64_t>::max()},
+                          is_bitfield_(is_bitfield), bit_offset_(bit_offset),
+                          bit_size_(bit_size) {
     }
 
     AnyFundamentalVariableMonitoringWithSharedFile(const AnyFundamentalVariableMonitoringWithSharedFile &other)
@@ -251,11 +277,14 @@ public:
 
 template<typename T, uint64_t block_size = 1024>
 AnyFundamentalVariableMonitoringWithSharedFile<block_size> flatten_type_to_enum2( //start_time, idx, x, base_path+view
-    std::shared_ptr<jackbergus::framework::FileSerializer<block_size> > &fileptr,
-    jackbergus::framework::FinestScaleTimeRepresentation start_time,
-    uint64_t idx,
-    uint64_t val,
-    const std::string &name) {
+                                                                std::shared_ptr<jackbergus::framework::FileSerializer<block_size> > &fileptr,
+                                                                jackbergus::framework::FinestScaleTimeRepresentation start_time,
+                                                                uint64_t idx,
+                                                                uint64_t val,
+                                                                const std::string &name,
+                                                                bool is_bitfield,
+                                                                size_t bit_offset,
+                                                                size_t bit_size) {
     std::type_index type_i = std::type_index(typeid(T));
     if constexpr (std::is_same_v<T, std::string>) {
         static_assert(false, "std::string not supported");
@@ -266,15 +295,15 @@ AnyFundamentalVariableMonitoringWithSharedFile<block_size> flatten_type_to_enum2
         static_assert(false, "nullptr_t not supported");
     } else if constexpr (std::is_integral_v<T>) {
         if constexpr (std::is_signed_v<T>) {
-            return {fileptr, idx, start_time, {name, T_SIGNED_INTEGRAL, type_i, val, sizeof(T)}};
+            return {fileptr, idx, start_time, {name, T_SIGNED_INTEGRAL, type_i, val, sizeof(T)}, is_bitfield, bit_offset, bit_size};
         } else {
-            return {fileptr, idx, start_time, {name, T_U_INTEGRAL, type_i, val, sizeof(T)}};
+            return {fileptr, idx, start_time, {name, T_U_INTEGRAL, type_i, val, sizeof(T)}, is_bitfield, bit_offset, bit_size};
         }
     } else if constexpr (std::is_floating_point_v<T>) {
         if constexpr (std::is_signed_v<T>) {
-            return {fileptr, idx, start_time, {name, T_SIGNED_FLOAT, type_i, val, sizeof(T)}};
+            return {fileptr, idx, start_time, {name, T_SIGNED_FLOAT, type_i, val, sizeof(T)}, is_bitfield, bit_offset, bit_size};
         } else {
-            return {fileptr, idx, start_time, {name, T_U_FLOAT, type_i, val, sizeof(T)}};
+            return {fileptr, idx, start_time, {name, T_U_FLOAT, type_i, val, sizeof(T)}, is_bitfield, bit_offset, bit_size};
         }
     } else if constexpr (is_std_array<T>::value) {
         static_assert(false, "arrays are not supported: please consider flattening the type");
@@ -293,7 +322,7 @@ AnyFundamentalVariableMonitoringWithSharedFile<block_size> flatten_type_to_enum2
             std::string enum_name = magic_enum::enum_name(val_entry).data();
             forEnumValueToNameMapping[static_cast<uint64_t>(val_entry)] = enum_name;
         }
-        return {fileptr, idx, start_time, {name, T_ENUM, type_i, val, sizeof(T), forEnumValueToNameMapping}};
+        return {fileptr, idx, start_time, {name, T_ENUM, type_i, val, sizeof(T), forEnumValueToNameMapping}, is_bitfield, bit_offset, bit_size};
     } else if constexpr (is_tuple<T>::value) {
         static_assert(false, "tuples are not supported: please consider flattening the type");
     } else if constexpr (std::is_union_v<T>) {
@@ -318,40 +347,54 @@ AnyFundamentalVariableMonitoringWithSharedFile<block_size> flatten_type_to_enum2
 template<typename T, int x, int to, uint64_t block_size = 1024>
 struct static_forshared {
     static std::vector<AnyFundamentalVariableMonitoringWithSharedFile<block_size> > expandWithBasicMonitor(
-        std::shared_ptr<jackbergus::framework::FileSerializer<block_size> > &fileptr,
-        jackbergus::framework::FinestScaleTimeRepresentation start_time,
-        const std::string &base_path = "",
-        uint64_t idx = 0) {
+                    std::shared_ptr<jackbergus::framework::FileSerializer<block_size> > &fileptr,
+                    jackbergus::framework::FinestScaleTimeRepresentation start_time,
+                    const std::string &base_path = "",
+                    uint64_t idx = 0,
+                    uint64_t prev_record_offset = 0) {
+
+        uint64_t old_prev_record_offset = prev_record_offset;
         std::vector<AnyFundamentalVariableMonitoringWithSharedFile<block_size> > current;
+        constexpr bool is_bitfield = refl::trait::get_t<x, refl::member_list<T> >::is_bitfield;
+        constexpr uint64_t bit_offset = refl::trait::get_t<x, refl::member_list<T> >::bitfield_offset;
+        constexpr uint64_t bit_size = refl::trait::get_t<x, refl::member_list<T> >::bitsize;
         auto view = std::string(refl::trait::get_t<x, refl::member_list<T> >::name.c_str());
         using K = typename refl::trait::get_t<x, refl::member_list<T> >::value_type;
         constexpr auto val = getTypeInformation<K>();
+        if (prev_record_offset+bit_offset == 130) {
+            std::cout << "PRINTSERROR" << std::endl;
+        }
         if constexpr (val == type_cases::T_CLASS) {
             // if I am now dealing with a class, then consider recursively wrapping this into something else,
             // and re-start the computation back again
             current = static_forshared<K, 0, refl::member_list<K>::size>::expandWithBasicMonitor(
-                fileptr, start_time, base_path + view + ".", idx);
+                fileptr, start_time, base_path + view + ".", idx, bit_offset);
         } else if constexpr (val == type_cases::T_STATIC_ARRAY) {
             // If this is an array, then I need to consider whether the internal element is a fundamental type or not
             using H = typename std::remove_all_extents_t<K>;
-            constexpr uint64_t N = sizeof(K) / sizeof(H);
+            constexpr auto current_size = sizeof(H);
+            constexpr uint64_t N = sizeof(K) / current_size;
             if constexpr (!std::is_fundamental_v<H>) {
+                constexpr auto current_packed_size = refl::descriptor::bit_val<H>();
                 for (auto i = 0u; i < N; ++i) {
                     auto local = static_forshared<H, 0, refl::member_list<H>::size>::expandWithBasicMonitor(
-                        fileptr, start_time, base_path + view + "[" + std::to_string(i) + "].", idx);
+                        fileptr, start_time, base_path + view + "[" + std::to_string(i) + "].", idx, prev_record_offset+bit_offset);
                     current.insert(current.end(), std::move_iterator(local.begin()), std::move_iterator(local.end()));
+                    prev_record_offset += current_packed_size;
                 }
             } else {
                 for (auto i = 0u; i < N; ++i) {
                     current.emplace_back(flatten_type_to_enum2<H>(fileptr, start_time, idx, x,
-                                                                  base_path + view + "[" + std::to_string(i) + "]"));
+                                                                  base_path + view + "[" + std::to_string(i) + "]", is_bitfield, prev_record_offset+bit_offset, bit_size));
+                    prev_record_offset += current_size;
                 }
             }
         } else {
             // Otherwise, just return the element as it stands, forsooth!
-            current.emplace_back(flatten_type_to_enum2<K>(fileptr, start_time, idx, x, base_path + view));
+            current.emplace_back(flatten_type_to_enum2<K>(fileptr, start_time, idx, x, base_path + view, is_bitfield, prev_record_offset+bit_offset, bit_size));
         }
-        auto result = static_forshared<T, x + 1, to>::expandWithBasicMonitor(fileptr, start_time, base_path, idx);
+
+        auto result = static_forshared<T, x + 1, to>::expandWithBasicMonitor(fileptr, start_time, base_path, idx, old_prev_record_offset);
         current.insert(current.end(), std::move_iterator(result.begin()), std::move_iterator(result.end()));
         return current;
     }
@@ -416,7 +459,8 @@ struct static_forshared<T, to, to, block_size> {
     expandWithBasicMonitor(std::shared_ptr<jackbergus::framework::FileSerializer<block_size> > &fileptr,
                            jackbergus::framework::FinestScaleTimeRepresentation start_time,
                            const std::string &base_path = "",
-                           uint64_t idx = 0) {
+                           uint64_t idx = 0,
+                           uint64_t prev_offset = 0) {
         return {};
     }
 };
@@ -426,7 +470,7 @@ std::vector<AnyFundamentalVariableMonitoringWithSharedFile<block_size> >
 getNativeType2(std::shared_ptr<jackbergus::framework::FileSerializer<block_size> > &fileptr,
                jackbergus::framework::FinestScaleTimeRepresentation start_time,
                uint64_t idx) {
-    auto v = static_forshared<T, 0, refl::member_list<T>::size>::expandWithBasicMonitor(fileptr, start_time, "", idx);
+    auto v = static_forshared<T, 0, refl::member_list<T>::size>::expandWithBasicMonitor(fileptr, start_time, "", idx, 0);
     return v;
 }
 
