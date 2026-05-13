@@ -23,6 +23,7 @@
 #define GENERALFRAMEWORK_ANYFUNDAMENTALVARIABLEMONITORINGWITHSHAREDFILE_H
 
 #include <cstdint>
+#include <functional>
 #include <jackbergus/framework/types/NativeTypes.h>
 #include <narcissus/lightweight_any.h>
 #include <jackbergus/framework/monitor/NativeTypeMonitoring.h>
@@ -31,6 +32,8 @@
 
 #include "AnyFundamentalVariableMonitoring.h"
 #include "jackbergus/data/recursive_encoder.h"
+
+using stack_function = std::function<lightweight_any(const lightweight_any&)>;
 
 /**
  * AnyFundamentalVariableMonitoringWithSharedFile is basically a specification of AnyFundamentalVariableMonitoring, with the only
@@ -52,9 +55,16 @@ class AnyFundamentalVariableMonitoringWithSharedFile {
     uint64_t bit_size_;
     static_assert(sizeof(jackbergus::framework::new_delta_data_structure) + 1 < block_size,
                   "new_delta_data_structure size mismatch");
+    std::vector<stack_function> stacks;
 
 public:
 
+    void addStackFunction(stack_function&& function) {
+        stacks.emplace_back(std::move(function));
+    }
+    const std::vector<stack_function>& getStack() {
+        return stacks;
+    }
     bool isBitfield() const {
         return is_bitfield_;
     }
@@ -361,9 +371,6 @@ struct static_forshared {
         auto view = std::string(refl::trait::get_t<x, refl::member_list<T> >::name.c_str());
         using K = typename refl::trait::get_t<x, refl::member_list<T> >::value_type;
         constexpr auto val = getTypeInformation<K>();
-        if (prev_record_offset+bit_offset == 130) {
-            std::cout << "PRINTSERROR" << std::endl;
-        }
         if constexpr (val == type_cases::T_CLASS) {
             // if I am now dealing with a class, then consider recursively wrapping this into something else,
             // and re-start the computation back again
@@ -379,6 +386,15 @@ struct static_forshared {
                 for (auto i = 0u; i < N; ++i) {
                     auto local = static_forshared<H, 0, refl::member_list<H>::size>::expandWithBasicMonitor(
                         fileptr, start_time, base_path + view + "[" + std::to_string(i) + "].", idx, prev_record_offset+bit_offset);
+                    uint64_t array_idx = i;
+                    for (auto& ref : local) {
+                        ref.addStackFunction([array_idx](auto field_access1) {
+                            auto ptr2 = (T*)field_access1.raw();
+                            auto& ref_field3 = *ptr2.*(refl::trait::get_t<x, refl::member_list<T>>::pointer);
+                            lightweight_any field_access2{&ref_field3[array_idx]};
+                            return field_access2;
+                        });
+                    }
                     current.insert(current.end(), std::move_iterator(local.begin()), std::move_iterator(local.end()));
                     prev_record_offset += current_packed_size;
                 }
@@ -387,13 +403,22 @@ struct static_forshared {
                     current.emplace_back(flatten_type_to_enum2<H>(fileptr, start_time, idx, x,
                                                                   base_path + view + "[" + std::to_string(i) + "]", is_bitfield, prev_record_offset+bit_offset, bit_size));
                     prev_record_offset += current_size;
+                    uint64_t idx_ = x;
+                    uint64_t array_idx = i;
+                    current.rbegin()->addStackFunction( [idx_, array_idx](auto field_access2) {
+                        auto ref_field3 = getter<T, idx_>(*(T*)field_access2.raw());
+                        return lightweight_any{ref_field3[array_idx]};
+                    });
                 }
             }
         } else {
             // Otherwise, just return the element as it stands, forsooth!
             current.emplace_back(flatten_type_to_enum2<K>(fileptr, start_time, idx, x, base_path + view, is_bitfield, prev_record_offset+bit_offset, bit_size));
+            current.rbegin()->addStackFunction( [idx](auto field_access2) {
+                auto ref_field3 = getter<T, x>(*(T*)field_access2.raw());
+                return lightweight_any{ref_field3};
+            });
         }
-
         auto result = static_forshared<T, x + 1, to>::expandWithBasicMonitor(fileptr, start_time, base_path, idx, old_prev_record_offset);
         current.insert(current.end(), std::move_iterator(result.begin()), std::move_iterator(result.end()));
         return current;

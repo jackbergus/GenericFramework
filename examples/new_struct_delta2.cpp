@@ -72,6 +72,7 @@ void testing() {
 
 }
 
+
 int main() {
     testing();
     std::cout << std::endl << std::endl << std::endl;
@@ -89,7 +90,7 @@ int main() {
     std::cout << wrapper1.toString() << std::endl;
 
     std::cout << sizeof(Element1_N) + sizeof(Element2_L)*10 << std::endl;
-
+    std::unordered_map<std::string, uint64_t> debug_fieldname_to_vectoroffset;
     memcpy(&elementi_2, &final_n, sizeof(Final_F));
     elementi_2.enumerato3 = 1; // Valori dal tempo 2
     elementi_2.second[7].cho = 19; // Valori dal tempo 7
@@ -114,17 +115,39 @@ int main() {
         const auto& field = fields[idx];
         std::cout << "[" << field.bitOffset() << ", " << field.bitOffset()+field.bitSize()-1 << "] for " << field.field_name() <<  std::endl;
         interval_of_offsets.insertInterval({field.bitOffset(), field.bitOffset()+field.bitSize()-1, idx});
+        debug_fieldname_to_vectoroffset[field.field_name()] = idx;
     }
 
-    auto result = wrapper2.deltaFromIntervalTreeSlot(interval_of_offsets, wrapper1);
-    for (const auto& idx : result) {
-        std::cout << " -- " << fields[idx].field_name() << std::endl;
+    std::vector<stack_function> stacks;
+    lightweight_any finale_wrapped{&elementi_2};
+    stacks.emplace_back([](auto finale_wrapped) {
+        auto ptr1 = (Final_F*)finale_wrapped.raw();
+        auto& ref_field2 = *ptr1.*(refl::trait::get_t<1, refl::member_list<Final_F>>::pointer);
+        lightweight_any field_access1{&ref_field2[3]};
+        return field_access1;
+    });
+    stacks.emplace_back([](auto field_access1) {
+        auto ptr2 = (Element2_N*)field_access1.raw();
+        auto& ref_field3 = *ptr2.*(refl::trait::get_t<2, refl::member_list<Element2_N>>::pointer);
+        lightweight_any field_access2{&ref_field3[2]};
+        return field_access2;
+    });
+    stacks.emplace_back([](auto field_access2) {
+        auto ref_field3 = getter<InnerNestingLevel, 2>(*(InnerNestingLevel*)field_access2.raw());
+        return lightweight_any{ref_field3};
+    });
+
+
+
+    auto it = debug_fieldname_to_vectoroffset.find("second[3].val[1].val3");
+    if (it != debug_fieldname_to_vectoroffset.end()) {
+        auto& field = fields[it->second];
+        const auto& s = field.getStack();
+        for (auto it = s.rbegin(); it != s.rend(); it++) {
+            finale_wrapped = (*it)(finale_wrapped);
+        }
+        auto val = *(refl::trait::get_t<2, refl::member_list<InnerNestingLevel>>::value_type*)finale_wrapped.raw();
+        std::cout << val << std::endl;
     }
-
-    lightweight_any finale_wrapped{&final_n};
-    auto ptr = (Final_F*)finale_wrapped.raw();
-    auto& ref_field2 = *ptr.*(refl::trait::get_t<1, refl::member_list<Final_F>>::pointer);
-    ref_field2[1];
-
 
 }
