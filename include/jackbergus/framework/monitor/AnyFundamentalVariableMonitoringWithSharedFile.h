@@ -188,6 +188,7 @@ public:
                 return f << "wtf?";
 
         }
+        return f;
     }
 
     AnyFundamentalVariableMonitoringWithSharedFile

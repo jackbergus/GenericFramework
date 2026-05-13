@@ -19,6 +19,9 @@ struct SpecificStructureSerialization {
     std::string object_name;
     std::type_index type_index;
     std::vector<AnyFundamentalVariableMonitoringWithSharedFile<block_size> > fields;
+    uint64_t struct_size;
+    std::vector<unsigned char> fields_bearing;
+    arbitrary_bitset bsw;
 
     SpecificStructureSerialization() : object_name(""), type_index(std::type_index(typeid(void))), fields{},
                                        struct_idx{std::numeric_limits<uint64_t>::max()} {
@@ -34,6 +37,11 @@ struct SpecificStructureSerialization {
         this->struct_idx = struct_idx;
         fields = getNativeType2<T>(fileptr, 0, this->struct_idx);
         updateValue(0, initial_value_expected, true);
+        struct_size = sizeof(T);
+        fields_bearing.resize(struct_size, 0);
+        std::memcpy(fields_bearing.data(), &initial_value_expected, sizeof(T));
+        arbitrary_bitset t((unsigned char*)fields_bearing.data(), sizeof(T));
+
     }
 
     void finaliseWrite() {
@@ -46,7 +54,9 @@ struct SpecificStructureSerialization {
     bool updateValue(jackbergus::framework::FinestScaleTimeRepresentation curr_t,
                      const T &value,
                      bool firstWrite = false) {
-        if (type_index == std::type_index(typeid(T))) {
+        if (type_index == std::type_index(typeid(T)) && (struct_size == sizeof(T))) {
+#ifdef OLD_DELTA
+            // Old time consuming way to compute the delta writing: actually
             std::vector<uint64_t> to_persist_fields;
             to_persist_fields.reserve(fields.size());
             static_forshared<T, 0, refl::member_list<T>::size>::setRecursivelyWithTemplates(
@@ -58,6 +68,9 @@ struct SpecificStructureSerialization {
                     fields[idx].flush(min, max, false, firstWrite);
                 }
             }
+#else
+#endif
+
             return true;
         } else {
             return false;

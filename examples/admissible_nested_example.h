@@ -32,7 +32,7 @@ struct InnerNestingLevel {
     int16_t val3 : 5;
     int16_t filling: 4;
 } __attribute__((packed));
-
+static_assert(sizeof(InnerNestingLevel) == 2);
 
 struct Element2_N {
     int16_t cho;

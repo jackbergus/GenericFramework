@@ -86,7 +86,7 @@ int main() {
     final_n.first.val = 7; // Valori dal tempo 4
     final_n.second[3].val[2].val2 = 3;
     final_n.second[3].val[1].val3 = 5;
-    arbitrary_bitset<refl::descriptor::bit_val<Final_F>()> wrapper1((uint64_t *) &final_n);
+    arbitrary_bitset wrapper1((unsigned char *) &final_n, refl::descriptor::bit_val<Final_F>());
     std::cout << wrapper1.toString() << std::endl;
 
     std::cout << sizeof(Element1_N) + sizeof(Element2_L)*10 << std::endl;
@@ -104,7 +104,7 @@ int main() {
     elementi_2.second[3].val[1].val3 = 6;
     elementi_2.second[3].val[2].val2 = 2;
 
-    arbitrary_bitset<refl::descriptor::bit_val<Final_F>()> wrapper2((uint64_t *) &elementi_2);
+    arbitrary_bitset wrapper2((unsigned char*) &elementi_2, refl::descriptor::bit_val<Final_F>());
     std::cout << wrapper2.toString() << std::endl;
 
     std::shared_ptr<jackbergus::framework::FileSerializer<>> NO_FILE{nullptr};
