@@ -9,12 +9,14 @@
 #include <cstdint>
 #include <array>
 
-struct Element1_N {
+#include <jackbergus/data/packed.h>
+
+PACK(struct Element1_N {
     uint32_t val;
     uint32_t jes;
     int16_t cho;
     int16_t voi_;
-} __attribute__((packed));
+});
 
 
 
@@ -26,38 +28,38 @@ constexpr auto int32M = std::numeric_limits<int32_t>::max();
 constexpr auto uint8M = std::numeric_limits<uint8_t>::max();
 constexpr auto int16M = std::numeric_limits<int16_t>::max();
 
-struct InnerNestingLevel {
+PACK(struct InnerNestingLevel {
     uint16_t ripping : 3;
     uint16_t val1 : 1;
     uint16_t val2 : 3;
     uint16_t val3 : 5;
     uint16_t filling: 4;
-} __attribute__((packed));
+} );
 static_assert(sizeof(InnerNestingLevel) == 2);
 
-struct Element2_N {
+PACK(struct Element2_N {
     int16_t cho;
     int16_t voi_;
     InnerNestingLevel val[3];
-} __attribute__((packed));
+} );
 static_assert(sizeof(Element2_N) == sizeof(int16_t)*2+ 3*sizeof(InnerNestingLevel));
 
 
-struct Final_N {
+PACK(struct Final_N {
     Element1_N first;
     Element2_N second[10];
     uint32_t third;
     uint8_t enumerato;
-} __attribute__((packed));
+} );
 
-struct Final_F {
+PACK(struct Final_F {
     Element1_N first;
     Element2_N second[10];
     int32_t third;
     uint8_t enumerato : 3;
     uint8_t enumerato2 : 3;
     uint8_t enumerato3 : 2;
-} __attribute__((packed));
+} );
 
 namespace std {
     template<>

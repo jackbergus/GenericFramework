@@ -111,7 +111,7 @@ struct numeric_limits<Final_N> {
 
 // In C++17, this is the best that you can do... This is entirely avoidable in C++20
 #include "refl.hpp"
-REFL_AUTO(type(Element1_N), field(val), field(jes), bitfield(cho), bitfield(voi_))
+REFL_AUTO(type(Element1_N), field(val), field(jes), bitfield(cho, 2), bitfield(voi_, 3))
 REFL_AUTO(type(Element2_N), field(cho), field(voi_), field(val))
 REFL_AUTO(type(Final_N), field(first), field(second), field(third), field(enumerato))
 

@@ -140,6 +140,7 @@ int main() {
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     auto differences = wrapper1.deltaFromIntervalTreeSlot(interval_of_offsets, wrapper2);
+#ifdef FIRST_VERSION
     std::cout << "We found #" << differences.size() << " changes, which consist of the following: "  << std::endl;
     for (const auto& idx : differences) {
         lightweight_any finale_wrapped{&elementi_2};
@@ -152,6 +153,7 @@ int main() {
         std::cout << field.field_name() << ": changed as ";
         field.printNative(std::cout, finale_wrapped) << std::endl;
     }
+#endif
 
     // stacks.emplace_back([](auto finale_wrapped) {
     //     auto ptr1 = (Final_F*)finale_wrapped.raw();

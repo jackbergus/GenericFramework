@@ -66,7 +66,11 @@ class UDPServer {
 #if defined(MINGW_DDK_H) || defined(WIN32) || defined(WIN64) || defined(__MINGW64__) || defined(__MINGW32__)
           //The SO_RCVTIMEO socket option in Windows sets a timeout (in milliseconds) for blocking receive calls like recv().
           DWORD timeout = read_timeout.tv_sec *1000 + read_timeout.tv_usec/1000000;
+#if _MSC_VER
+          timeout = max(timeout, (DWORD)10);
+#else
           timeout = std::max(timeout, (DWORD)10);
+#endif
           ris = setsockopt(rc, SOL_SOCKET, SO_RCVTIMEO,(char *) &timeout, sizeof timeout);
 #else
           ris = setsockopt(rc, SOL_SOCKET, SO_RCVTIMEO,(char *) &read_timeout, sizeof read_timeout);
@@ -128,6 +132,9 @@ public:
     if (rc < 0) {
       return false;
     }
+#if _MSC_VER
+    using socklen_t = int;
+#endif
     socklen_t len;
     int n;
     len = sizeof(cliaddr);  //len is value/result
