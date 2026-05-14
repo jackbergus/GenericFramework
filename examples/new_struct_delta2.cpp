@@ -74,7 +74,20 @@ void testing() {
 
 
 int main() {
-    testing();
+    unsigned char buffero[123];
+    arbitrary_bitset as(buffero, sizeof(buffero));
+    as.clear();
+    std::cout << as.toString() << std::endl;
+    as.set_mask(0b1000000000000000000000000000000000000000000000000000000000000001, 13);
+    std::cout << as.toString() << std::endl;
+    as.clear();
+    as.set_mask(0b1010000000000000000000000000000000000000000000000000000000000001, 120);
+    std::cout << as.toString() << std::endl;
+    as.clear();
+    as.set_mask(0b1010000000000000000000000000000000000000000000000000000000000001, 123-64+2);
+    std::cout << as.toString() << std::endl;
+
+    // testing();
     std::cout << std::endl << std::endl << std::endl;
 
     Final_F final_n, elementi_2;
