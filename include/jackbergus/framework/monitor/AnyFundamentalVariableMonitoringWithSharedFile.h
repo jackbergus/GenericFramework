@@ -44,7 +44,12 @@ using stack_function = std::function<lightweight_any(const lightweight_any&)>;
 template<uint64_t block_size = 1024>
 class AnyFundamentalVariableMonitoringWithSharedFile {
     jackbergus::framework::FinestScaleTimeRepresentation start_time, end_time_inclusive;
+#ifdef FIRST_VERSION
     lightweight_any current_value;
+    std::vector<stack_function> stacks;
+#else
+    uint64_t current_value;
+#endif
     bool is_value_valid;
     jackbergus::framework::NativeTypeMonitoring type_info;
     uint64_t struct_idx, field_idx;
@@ -55,16 +60,18 @@ class AnyFundamentalVariableMonitoringWithSharedFile {
     uint64_t bit_size_;
     static_assert(sizeof(jackbergus::framework::new_delta_data_structure) + 1 < block_size,
                   "new_delta_data_structure size mismatch");
-    std::vector<stack_function> stacks;
+
 
 public:
 
+#ifdef FIRST_VERSION
     void addStackFunction(stack_function&& function) {
         stacks.emplace_back(std::move(function));
     }
     const std::vector<stack_function>& getStack() {
         return stacks;
     }
+#endif
     bool isBitfield() const {
         return is_bitfield_;
     }
@@ -203,7 +210,11 @@ public:
                                                            file_serialized{file_serialized}, struct_idx{struct_idx},
                                                            field_idx{std::numeric_limits<uint64_t>::max()},
                                                            is_bitfield_(is_bitfield), bit_offset_(bit_offset),
-                                                           bit_size_(bit_size) {
+                                                           bit_size_(bit_size)
+#ifndef FIRST_VERSION
+    , current_value{0}
+#endif
+    {
     }
 
     AnyFundamentalVariableMonitoringWithSharedFile
@@ -211,11 +222,18 @@ public:
      uint64_t struct_idx,
      jackbergus::framework::FinestScaleTimeRepresentation start_time,
      jackbergus::framework::NativeTypeMonitoring &&type,
+#ifdef FIRST_VERSION
      const lightweight_any &value,
+#else
+     const uint64_t& value,
+#endif
      bool is_bitfield,
      uint64_t bit_offset,
      uint64_t bit_size) : type_info{std::move(type)}, start_time(start_time), end_time_inclusive(start_time),
-                                     current_value(value), is_value_valid(true), file_serialized{file_serialized},
+
+                                     current_value(value),
+
+    is_value_valid(true), file_serialized{file_serialized},
     struct_idx{struct_idx}, field_idx{std::numeric_limits<uint64_t>::max()},
                           is_bitfield_(is_bitfield), bit_offset_(bit_offset),
                           bit_size_(bit_size) {
@@ -286,7 +304,11 @@ public:
      */
     template<typename T>
     T *get() const {
+#ifdef FIRST_VERSION
         return is_value_valid ? (T *) current_value.raw() : nullptr;
+#else
+        return is_value_valid ? (T *) &current_value : nullptr;
+#endif
     }
 
     [[nodiscard]] const jackbergus::framework::FinestScaleTimeRepresentation getCurrentTime() const {
@@ -294,11 +316,19 @@ public:
     }
 
     [[nodiscard]] void *getRawPtr() const {
+#ifdef FIRST_VERSION
         return is_value_valid ? (void *) current_value.raw() : nullptr;
+#else
+        return is_value_valid ? (void *) &current_value : nullptr;
+#endif
     }
 
     bool updateValue(jackbergus::framework::FinestScaleTimeRepresentation curr_t,
+#ifdef FIRST_VERSION
                      const lightweight_any &value,
+#else
+                     const uint64_t value,
+#endif
                      uint64_t field_idx) {
         return updateValue(curr_t, value, {}, field_idx);
     }
@@ -311,7 +341,11 @@ public:
      * @return Whether the value is ready to be persisted on disk, so to force the writing, forsooth!
      */
     bool updateValue(jackbergus::framework::FinestScaleTimeRepresentation curr_t,
+#ifdef FIRST_VERSION
                      const lightweight_any &value,
+#else
+                     const uint64_t value,
+#endif
                      const std::equal_to<lightweight_any> &t,
                      uint64_t field_idx) {
         ;
@@ -334,7 +368,11 @@ public:
             s.unnested_field_id = this->field_idx;
             s.actual_size = type_info.sizeof_;
             // start, end, continuing are just determined at the final finalization, forsooth!
+#ifdef FIRST_VERSION
             s.actual_data = *(uint64_t *) current_value.raw();
+#else
+            s.actual_data = current_value;
+#endif
             s.setCRC();
             buffer = {s};
             if (!isFirstSet)
@@ -355,7 +393,11 @@ public:
             s.unnested_field_id = this->field_idx;
             s.actual_size = type_info.sizeof_;
             // start, end, continuing are just determined at the final finalization, forsooth!
+#ifdef FIRST_VERSION
             s.actual_data = *(uint64_t *) current_value.raw();
+#else
+            s.actual_data = current_value;
+#endif
             s.setCRC();
             buffer = {s};
             return true;
@@ -465,6 +507,7 @@ struct static_forshared {
                     auto local = static_forshared<H, 0, refl::member_list<H>::size>::expandWithBasicMonitor(
                         fileptr, start_time, base_path + view + "[" + std::to_string(i) + "].", idx, prev_record_offset+bit_offset);
                     uint64_t array_idx = i;
+#ifdef FIRST_VERSION
                     for (auto& ref : local) {
                         ref.addStackFunction([array_idx](auto field_access1) {
                             auto ptr2 = (T*)field_access1.raw();
@@ -473,6 +516,7 @@ struct static_forshared {
                             return field_access2;
                         });
                     }
+#endif
                     current.insert(current.end(), std::move_iterator(local.begin()), std::move_iterator(local.end()));
                     prev_record_offset += current_packed_size;
                 }
@@ -483,19 +527,23 @@ struct static_forshared {
                     prev_record_offset += current_size;
                     uint64_t idx_ = x;
                     uint64_t array_idx = i;
+#ifdef FIRST_VERSION
                     current.rbegin()->addStackFunction( [idx_, array_idx](auto field_access2) {
                         auto ref_field3 = getter<T, idx_>(*(T*)field_access2.raw());
                         return lightweight_any{ref_field3[array_idx]};
                     });
+#endif
                 }
             }
         } else {
             // Otherwise, just return the element as it stands, forsooth!
             current.emplace_back(flatten_type_to_enum2<K>(fileptr, start_time, idx, x, base_path + view, is_bitfield, prev_record_offset+bit_offset, bit_size));
+#ifdef FIRST_VERSION
             current.rbegin()->addStackFunction( [idx](auto field_access2) {
                 auto ref_field3 = getter<T, x>(*(T*)field_access2.raw());
                 return lightweight_any{ref_field3};
             });
+#endif
         }
         auto result = static_forshared<T, x + 1, to>::expandWithBasicMonitor(fileptr, start_time, base_path, idx, old_prev_record_offset);
         current.insert(current.end(), std::move_iterator(result.begin()), std::move_iterator(result.end()));

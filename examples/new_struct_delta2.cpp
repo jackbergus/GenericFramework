@@ -3,7 +3,7 @@
 //
 
 
-#include <jackbergus/framework/monitor/AnyFundamentalVariableMonitoringWithSharedFile.h>
+#include  <jackbergus/framework/monitor/AnyFundamentalVariableMonitoringWithSharedFile.h>
 
 #include <magic_enum/magic_enum.hpp>
 
@@ -116,6 +116,7 @@ int main() {
     elementi_2.first.voi_ = 8; // Valori dal tempo 8
     elementi_2.second[3].val[1].val3 = 6;
     elementi_2.second[3].val[2].val2 = 2;
+    elementi_2.third = -666; // Valori dal tempo 2
 
     arbitrary_bitset wrapper2((unsigned char*) &elementi_2, refl::descriptor::bit_val<Final_F>());
     std::cout << wrapper2.toString() << std::endl;

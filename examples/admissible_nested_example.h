@@ -22,6 +22,7 @@ struct Element1_N {
 #include <limits>
 
 constexpr auto uint32M = std::numeric_limits<uint32_t>::max();
+constexpr auto int32M = std::numeric_limits<int32_t>::max();
 constexpr auto uint8M = std::numeric_limits<uint8_t>::max();
 constexpr auto int16M = std::numeric_limits<int16_t>::max();
 
@@ -52,7 +53,7 @@ struct Final_N {
 struct Final_F {
     Element1_N first;
     Element2_N second[10];
-    uint32_t third;
+    int32_t third;
     uint8_t enumerato : 3;
     uint8_t enumerato2 : 3;
     uint8_t enumerato3 : 2;
@@ -111,7 +112,7 @@ struct numeric_limits<Final_F> {
         }
         constexpr static Final_F max() {
             constexpr auto snd = numeric_limits<Element2_N>::max();
-            return {numeric_limits<Element1_N>::max(), {snd,snd,snd,snd,snd,snd,snd,snd,snd,snd}, uint32M, 7, 7, 3};
+            return {numeric_limits<Element1_N>::max(), {snd,snd,snd,snd,snd,snd,snd,snd,snd,snd}, int32M, 7, 7, 3};
         }
     };
 }

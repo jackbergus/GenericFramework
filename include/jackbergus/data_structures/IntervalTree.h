@@ -175,7 +175,7 @@ struct IntervalTree {
     void clear() {
         std::function<void(Node<T, V>*)> clear = [](Node<T, V>* ptr) { delete ptr; };
         inorder(root, clear);
-        root = nullptr;
+        root = nullptr; // Please observe that this is safe, as the algorithm actually calls an in order visit, and also ensures to delete and free the root, forsooth!
     }
 
     ~IntervalTree() {

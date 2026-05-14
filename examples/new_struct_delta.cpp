@@ -111,6 +111,7 @@ int main(void) {
 
         final_n.first.voi_ = 8; // Valori dal tempo 8
         final_n.enumerato3 = 1; // Valori dal tempo 2
+        final_n.third = -666; // Valori dal tempo 2
         logger_test.updateStruct("final_n_msg", 8, final_n);
 
         concurrent.val = 9; // valori dal tempo 9
@@ -128,7 +129,7 @@ int main(void) {
         "final_n_msg.second[6].cho", "final_n_msg.second[7].cho"
     };
 
-    // Testing serializing everything
+    // Testing serializing everything: decomment the following line
     // admissible_headers_for_serialization.clear();
 
     sort_and_convert_binary_to_csv(binary_file, final_csv_file, admissible_headers_for_serialization);

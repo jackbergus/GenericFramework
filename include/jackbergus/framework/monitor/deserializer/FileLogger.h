@@ -75,7 +75,11 @@ struct SpecificStructureSerialization {
                      bool firstWrite = false) {
         if (type_index == std::type_index(typeid(T)) && (struct_size == sizeof(T))) {
 #ifdef OLD_DELTA
-            // Old time consuming way to compute the delta writing: actually
+            // Old time consuming way to compute the delta writing:
+            // This was actually recursing over the field data structures,
+            // storing the values for each element, and determining whether
+            // the previously stored value was updated or not. Then, I was
+            // serializing the value on disk
             std::vector<uint64_t> to_persist_fields;
             to_persist_fields.reserve(fields.size());
             static_forshared<T, 0, refl::member_list<T>::size>::setRecursivelyWithTemplates(
@@ -88,7 +92,22 @@ struct SpecificStructureSerialization {
                 }
             }
 #else
-#endif
+            // In this new version of the algorithm, the thing that is performed is
+            //
+            // - Performing an efficient bitset operation to find the differences. So, I am comparing the data
+            //   bitwise, and not necessarily considering the actual semantic representation. The former suffices
+            //   to tell that the value changes by Leibniz Equality
+            // - Given the bits that were changed, then I reconstruct which fields are of interest, and which were
+            //   actually changed.
+            // - To efficiently access the structure, I avoid a complicated and laggy recursive visit of the fields,
+            //   but I directly use the bitmask to do so.
+
+            // Please observe that I cannot just retain the delta and avoid storing the entire
+            // data so to compare the delta, as it does not make sense. Also, the mechanism of just
+            // updating the needed fields is possible if you have complete control of the updates, but
+            // this is not general enough to consider external changes. Thus, you are resorted to
+            // 1)
+
             arbitrary_bitset wrapper2((unsigned char*)&value, sizeof(T)*8);
             // std::cout<< bsw.toString() << std::endl;
             // std::cout << wrapper2.toString() << std::endl;
@@ -98,6 +117,7 @@ struct SpecificStructureSerialization {
             auto max = *differences.rbegin();
             for (const auto idx : differences) {
                 auto& field = fields[idx];
+#ifdef FIRST_VERSION
                 const auto& s = field.getStack();
                 lightweight_any finale_wrapped{&value};
                 for (auto it = s.rbegin(); it != s.rend(); it++) {
@@ -105,9 +125,25 @@ struct SpecificStructureSerialization {
                 }
                 // field.printNative(std::cout, finale_wrapped) << " is the value changed for: " << field.field_name() << std::endl;
                 field.updateValue(curr_t, finale_wrapped, idx);
+#else
+                // In this second optimization, please observe that the updateValue doesn't really care about the type
+                // information, as this is retained within the field property alongside its actual size. Thus, I am
+                // not required to recursively visit a stack as in the first implementation of this, and I can just
+                // use as getter does and obtain the data, forsooth!
+                bsw.clear();
+                bsw.set_mask(bit_fill(field.bitSize()), field.bitOffset());
+                bsw &= wrapper2;
+                bsw >>= field.bitOffset();
+                // std::cout << map.toString() << std::endl;
+                uint64_t result = 0;
+                memcpy(&result, bsw.bitset, std::min((field.bitSize()/sizeof(arbitrary_bitset::T)) + (field.bitSize()%sizeof(arbitrary_bitset::T) ? 1 : 0), sizeof(uint64_t)));
+                field.updateValue(curr_t, result, idx);
+#endif
                 field.flush(min, max, false, firstWrite);
             }
             std::memcpy(fields_bearing.data(), &value, sizeof(T));
+#endif
+
             // bsw = wrapper2;
             return true;
         } else {
